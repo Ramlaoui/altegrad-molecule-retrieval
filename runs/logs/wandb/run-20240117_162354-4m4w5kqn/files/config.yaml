@@ -1,0 +1,83 @@
+wandb_version: 1
+
+model:
+  desc: null
+  value:
+    model_name: distilbert-base-uncased
+    num_node_features: 300
+    nout: 768
+    nhid: 300
+    graph_hidden_channels: 300
+optim:
+  desc: null
+  value:
+    optimizer: AdamW
+    scheduler: LinearWarmupCosineAnnealingLR
+    batch_size: 32
+    eval_batch_size: 32
+    lr_initial: 2e-5
+    weight_decay: 0.01
+    loss: contrastive
+    max_epochs: 1
+name_model:
+  desc: null
+  value: baseline
+model_object:
+  desc: null
+  value: src.model.Baseline
+is_debug:
+  desc: null
+  value: false
+wandb_project:
+  desc: null
+  value: altegrad-molecular
+checkpoint_dir:
+  desc: null
+  value: runs/checkpoints
+results_dir:
+  desc: null
+  value: runs/results
+logs_dir:
+  desc: null
+  value: runs/logs
+timestamp_id:
+  desc: null
+  value: 20240117-162353
+_wandb:
+  desc: null
+  value:
+    python_version: 3.11.7
+    cli_version: 0.16.2
+    framework: huggingface
+    huggingface_version: 4.36.2
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1705505034.772337
+    t:
+      1:
+      - 1
+      - 5
+      - 11
+      - 49
+      - 53
+      - 55
+      - 77
+      2:
+      - 1
+      - 5
+      - 11
+      - 49
+      - 53
+      - 55
+      - 77
+      3:
+      - 13
+      - 16
+      - 23
+      4: 3.11.7
+      5: 0.16.2
+      6: 4.36.2
+      8:
+      - 4
+      - 5
+      13: darwin-arm64

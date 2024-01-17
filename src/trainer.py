@@ -76,7 +76,7 @@ class BaseTrainer:
 
             self.logger = wandb.init(
                 project=self.config["wandb_project"],
-                name=logger_name,
+                name=self.run_name,
                 config=self.config,
                 dir=self.config["logs_dir"],
             )
@@ -163,7 +163,7 @@ class BaseTrainer:
             self.epoch = i
             self.model.train()
             start_time = time.time()
-            print_every = self.config.get("print_every", 50)
+            print_every = self.config.get("print_every", 20)
             count_iter = 0
             self.best_validation_loss = np.inf
             loss = 0
@@ -188,16 +188,16 @@ class BaseTrainer:
                 count_iter += 1
                 if count_iter % print_every == 0:
                     time2 = time.time()
-                    if not self.silent:
-                        print(
-                            "Iteration: {0}, Time: {1:.4f} s, training loss: {2:.4f}".format(
-                                count_iter,
-                                time2 - start_time,
-                                loss / print_every,
-                            )
-                        )
+                    # if not self.silent:
+                    #     print(
+                    #         "Iteration: {0}, Time: {1:.4f} s, training loss: {2:.4f}".format(
+                    #             count_iter,
+                    #             time2 - start_time,
+                    #             loss / print_every,
+                    #         )
+                    #     )
                     self.losses.append(loss)
-                    if self.is_debug:
+                    if not self.is_debug:
                         self.logger.log(
                             {
                                 "loss": loss / print_every,
@@ -227,7 +227,7 @@ class BaseTrainer:
                     "-----EPOCH" + str(i + 1) + "----- done.  Validation loss: ",
                     str(val_loss / len(self.val_loader)),
                 )
-            if self.is_debug:
+            if not self.is_debug:
                 self.logger.log(
                     {
                         "validation_loss": val_loss / len(self.val_loader),

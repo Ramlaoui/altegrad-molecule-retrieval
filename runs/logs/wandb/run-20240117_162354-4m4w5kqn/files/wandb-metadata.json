@@ -1,0 +1,39 @@
+{
+    "os": "macOS-14.0-arm64-arm-64bit",
+    "python": "3.11.7",
+    "heartbeatAt": "2024-01-17T15:23:55.285349",
+    "startedAt": "2024-01-17T15:23:54.765876",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--config",
+        "baseline"
+    ],
+    "state": "running",
+    "program": "-m main",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/Ramlaoui/altegrad-molecule-retrieval.git",
+        "commit": "33ca70bb9cf1cc313624633cbe85fddea4964502"
+    },
+    "email": "ramlaoui@outlook.com",
+    "root": "/Users/aliramlaoui/Library/CloudStorage/GoogleDrive-ramlaouiali@gmail.com/My Drive/Cours 3A/ALTEGRAD/challenge/altegrad-molecule-retrieval",
+    "host": "Alis-MacBook-Pro.local",
+    "username": "aliramlaoui",
+    "executable": "/Users/aliramlaoui/anaconda3/envs/altegrad/bin/python",
+    "cpu_count": 12,
+    "cpu_count_logical": 12,
+    "disk": {
+        "/": {
+            "total": 460.4317207336426,
+            "used": 12.91595458984375
+        }
+    },
+    "gpuapple": {
+        "type": "arm",
+        "vendor": "Apple"
+    },
+    "memory": {
+        "total": 16.0
+    }
+}
