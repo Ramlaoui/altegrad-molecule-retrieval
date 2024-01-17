@@ -24,12 +24,6 @@ if __name__ == "__main__":
         help="name of the model to use",
     )
     parser.add_argument(
-        "--device",
-        type=str,
-        default="cuda",
-        help="device to use for training",
-    )
-    parser.add_argument(
         "--num_node_features", type=int, default=9, help="number of node features"
     )
     parser.add_argument(
@@ -123,7 +117,6 @@ if __name__ == "__main__":
     config = config["default"]
     config["name_model"] = args.config
     config["model_object"] = model
-    config["device"] = args.device
 
     config["is_debug"] = args.is_debug
     config["wandb_project"] = args.wandb_project
