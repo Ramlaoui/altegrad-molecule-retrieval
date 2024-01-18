@@ -101,8 +101,6 @@ class BaseTrainer:
             file_path="./data/test_text.txt", tokenizer=self.tokenizer
         )
 
-        breakpoint()
-
     def get_dataloader(self):
         batch_size = self.config["optim"]["batch_size"]
         max_epochs = self.config["optim"].get("max_epochs", -1)
@@ -122,7 +120,6 @@ class BaseTrainer:
             shuffle=False,
         )
 
-        breakpoint()
         # Use samplers?
         # Use normalizers?
 
@@ -238,6 +235,8 @@ class BaseTrainer:
                     self.config["checkpoint_dir"]
                     + f"/best_checkpoint_{self.run_name}_{i}.pt"
                 )
+                if not (Path(self.config["checkpoint_dir"])).exists():
+                    os.makedirs(Path(self.config["checkpoint_dir"]), exist_ok=True)
                 torch.save(
                     {
                         "epoch": i,
@@ -286,6 +285,8 @@ class BaseTrainer:
         solution = pd.DataFrame(similarity)
         solution["ID"] = solution.index
         solution = solution[["ID"] + [col for col in solution.columns if col != "ID"]]
+        if not (Path(self.config["results_dir"])).exists():
+            os.makedirs(Path(self.config["results_dir"]), exist_ok=True)
         solution.to_csv(
             os.path.join(
                 self.config["results_dir"], f"results_{self.timestamp_id}.csv"
