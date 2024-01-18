@@ -1,7 +1,7 @@
 from src.dataloader import GraphTextDataset, GraphDataset, TextDataset
 import wandb
 from pathlib import Path
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 from torch.utils.data import DataLoader as TorchDataLoader
 from src.model import Baseline
 import numpy as np
@@ -101,6 +101,8 @@ class BaseTrainer:
             file_path="./data/test_text.txt", tokenizer=self.tokenizer
         )
 
+        breakpoint()
+
     def get_dataloader(self):
         batch_size = self.config["optim"]["batch_size"]
         max_epochs = self.config["optim"].get("max_epochs", -1)
@@ -119,6 +121,8 @@ class BaseTrainer:
             batch_size=self.config["optim"]["eval_batch_size"],
             shuffle=False,
         )
+
+        breakpoint()
         # Use samplers?
         # Use normalizers?
 
@@ -159,7 +163,8 @@ class BaseTrainer:
 
     def train(self):
         for i in tqdm(range(self.epoch, self.config["optim"]["max_epochs"])):
-            print("-----EPOCH{}-----".format(i + 1))
+            if not self.silent:
+                print("-----EPOCH{}-----".format(i + 1))
             self.epoch = i
             self.model.train()
             start_time = time.time()
@@ -188,14 +193,6 @@ class BaseTrainer:
                 count_iter += 1
                 if count_iter % print_every == 0:
                     time2 = time.time()
-                    # if not self.silent:
-                    #     print(
-                    #         "Iteration: {0}, Time: {1:.4f} s, training loss: {2:.4f}".format(
-                    #             count_iter,
-                    #             time2 - start_time,
-                    #             loss / print_every,
-                    #         )
-                    #     )
                     self.losses.append(loss)
                     if not self.is_debug:
                         self.logger.log(
@@ -239,7 +236,7 @@ class BaseTrainer:
                     print("validation loss improoved saving checkpoint...")
                 self.save_path = (
                     self.config["checkpoint_dir"]
-                    + f"/best_checkpoint_{self.model_name}_{i}.pt"
+                    + f"/best_checkpoint_{self.run_name}_{i}.pt"
                 )
                 torch.save(
                     {
