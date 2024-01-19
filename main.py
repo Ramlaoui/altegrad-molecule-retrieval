@@ -54,7 +54,7 @@ if __name__ == "__main__":
     config_model = "default"
     if len(config_type) > 1:
         config_model = config_type[1]
-    config_path = Path("configs") / (args.config + ".yaml")
+    config_path = Path("configs") / (config_file + ".yaml")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     model = MODELS_DICT[args.config]
