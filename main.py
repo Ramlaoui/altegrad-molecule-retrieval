@@ -3,7 +3,7 @@ import argparse
 import yaml
 from pathlib import Path
 from src.trainer import BaseTrainer
-from src.model import Baseline
+from src.models.baseline import Baseline
 
 MODELS_DICT = {
     "baseline": Baseline,
@@ -17,6 +17,7 @@ if __name__ == "__main__":
         default="baseline",
         help="path to the config file",
     )
+
     parser.add_argument(
         "--model_name",
         type=str,
@@ -48,13 +49,18 @@ if __name__ == "__main__":
     # TODO Parse the arguments to override the config when specified
 
     args = parser.parse_args()
+    config_type = args.config.split("-")
+    config_file = config_type[0]
+    config_model = "default"
+    if len(config_type) > 1:
+        config_model = config_type[1]
     config_path = Path("configs") / (args.config + ".yaml")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     model = MODELS_DICT[args.config]
 
-    config = config["default"]
-    config["name_model"] = args.config
+    config = config[config_model]
+    config["name_model"] = args.config_file
     config["model_object"] = model
 
     for arg in vars(args):
