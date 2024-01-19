@@ -27,7 +27,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device",
         type=str,
-        default="cuda",
         help="device to use for training",
     )
     parser.add_argument("--seed", type=int, default=42, help="random seed")
@@ -49,18 +48,32 @@ if __name__ == "__main__":
     # TODO Parse the arguments to override the config when specified
 
     args = parser.parse_args()
+
+    # Delete None arguments
+    delattrs = []
+    for arg in vars(args):
+        if getattr(args, arg) is None:
+            delattrs.append(arg)
+    for arg in delattrs:
+        delattr(args, arg)
+
     config_type = args.config.split("-")
     config_file = config_type[0]
-    config_model = "default"
-    if len(config_type) > 1:
-        config_model = config_type[1]
+
     config_path = Path("configs") / (config_file + ".yaml")
     with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-    model = MODELS_DICT[args.config]
+        config_read = yaml.safe_load(f)
+    model = MODELS_DICT[config_file]
 
-    config = config[config_model]
-    config["name_model"] = args.config_file
+    config = config_read["default"]
+
+    if len(config_type) > 1:
+        config_model = config_type[1]
+        # Careful here if parent is node in dict
+        for arg in config_read[config_model]:
+            config[arg].update(config_read[config_model][arg])
+
+    config["name_model"] = config_file
     config["model_object"] = model
 
     for arg in vars(args):

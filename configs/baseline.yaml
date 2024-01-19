@@ -18,4 +18,4 @@ default:
 
 scibert:
   model:
-    model_name: scibert-scivocab-uncased
+    model_name: allenai/scibert_scivocab_uncased

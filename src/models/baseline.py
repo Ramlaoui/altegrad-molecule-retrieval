@@ -23,7 +23,6 @@ class BaseGraphEncoder(nn.Module):
         x = graph_batch.x
         edge_index = graph_batch.edge_index
         batch = graph_batch.batch
-        breakpoint()
         x = self.conv1(x, edge_index)
         x = x.relu()
         x = self.conv2(x, edge_index)
