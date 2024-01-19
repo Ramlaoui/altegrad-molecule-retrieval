@@ -60,7 +60,7 @@ class BaseTrainer:
 
     def load(self):
         self.load_logger()
-        self.load_datasets()
+        self.load_train_val_datasets()
         self.load_model()
         self.load_optimizer()
         self.load_loss()
@@ -80,10 +80,10 @@ class BaseTrainer:
                 dir=self.config["logs_dir"],
             )
 
-    def load_datasets(
+    def load_train_val_datasets(
         self,
     ):
-        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.config["model_name"])
         self.gt = np.load("./data/token_embedding_dict.npy", allow_pickle=True)[()]
 
         self.val_dataset = GraphTextDataset(
@@ -93,11 +93,23 @@ class BaseTrainer:
             root="./data/", gt=self.gt, split="train", tokenizer=self.tokenizer
         )
 
+    def load_test_dataloader(self):
+        if "tokenizer" not in self.__dict__:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.config["model_name"])
+        if "gt" not in self.__dict__:
+            self.gt = np.load("./data/token_embedding_dict.npy", allow_pickle=True)[()]
+
         self.test_cids_dataset = GraphDataset(
             root="./data/", gt=self.gt, split="test_cids"
         )
         self.test_text_dataset = TextDataset(
             file_path="./data/test_text.txt", tokenizer=self.tokenizer
+        )
+
+        self.test_loader = DataLoader(
+            self.test_cids_dataset,
+            batch_size=self.config["optim"]["eval_batch_size"],
+            shuffle=False,
         )
 
     def get_dataloader(self):
@@ -111,12 +123,6 @@ class BaseTrainer:
         )
         self.train_loader = DataLoader(
             self.train_dataset, batch_size=batch_size, shuffle=True
-        )
-
-        self.test_loader = DataLoader(
-            self.test_cids_dataset,
-            batch_size=self.config["optim"]["eval_batch_size"],
-            shuffle=False,
         )
 
         # Use samplers?
@@ -252,6 +258,14 @@ class BaseTrainer:
     def submit_run(self):
         if not self.silent:
             print("loading best model...")
+        self.load_test_dataloader()
+
+        # delete train val loaders to free memory
+        del self.train_loader
+        del self.val_loader
+        del self.train_dataset
+        del self.val_dataset
+
         self.load_model()
         checkpoint = torch.load(self.save_path)
         self.model.load_state_dict(checkpoint["model_state_dict"])
