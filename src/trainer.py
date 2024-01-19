@@ -3,7 +3,7 @@ import wandb
 from pathlib import Path
 from torch_geometric.loader import DataLoader
 from torch.utils.data import DataLoader as TorchDataLoader
-from src.model import Baseline
+from src.models.baseline import Baseline
 import numpy as np
 from transformers import AutoTokenizer
 import torch
@@ -11,7 +11,6 @@ from torch import optim
 import time
 import os
 import pandas as pd
-import argparse
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 from torch.optim import AdamW
@@ -253,6 +252,7 @@ class BaseTrainer:
     def submit_run(self):
         if not self.silent:
             print("loading best model...")
+        self.load_model()
         checkpoint = torch.load(self.save_path)
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.eval()

@@ -6,9 +6,9 @@ from torch_geometric.nn import global_mean_pool
 from transformers import AutoModel
 
 
-class GraphEncoder(nn.Module):
+class BaseGraphEncoder(nn.Module):
     def __init__(self, num_node_features, nout, nhid, graph_hidden_channels):
-        super(GraphEncoder, self).__init__()
+        super(BaseGraphEncoder, self).__init__()
         self.nhid = nhid
         self.nout = nout
         self.relu = nn.ReLU()
@@ -23,6 +23,7 @@ class GraphEncoder(nn.Module):
         x = graph_batch.x
         edge_index = graph_batch.edge_index
         batch = graph_batch.batch
+        breakpoint()
         x = self.conv1(x, edge_index)
         x = x.relu()
         x = self.conv2(x, edge_index)
@@ -34,9 +35,9 @@ class GraphEncoder(nn.Module):
         return x
 
 
-class TextEncoder(nn.Module):
+class BaseTextEncoder(nn.Module):
     def __init__(self, model_name):
-        super(TextEncoder, self).__init__()
+        super(BaseTextEncoder, self).__init__()
         self.bert = AutoModel.from_pretrained(model_name)
 
     def forward(self, input_ids, attention_mask):
@@ -50,10 +51,10 @@ class Baseline(nn.Module):
         self, model_name, num_node_features, nout, nhid, graph_hidden_channels
     ):
         super(Baseline, self).__init__()
-        self.graph_encoder = GraphEncoder(
+        self.graph_encoder = BaseGraphEncoder(
             num_node_features, nout, nhid, graph_hidden_channels
         )
-        self.text_encoder = TextEncoder(model_name)
+        self.text_encoder = BaseTextEncoder(model_name)
 
     def forward(self, graph_batch, input_ids, attention_mask):
         graph_encoded = self.graph_encoder(graph_batch)
