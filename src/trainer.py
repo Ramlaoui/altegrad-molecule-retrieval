@@ -52,7 +52,7 @@ class BaseTrainer:
         self.timestamp_id = time.strftime("%Y%m%d-%H%M%S")
         self.job_id = uuid.uuid4().hex[:8]
         self.config["timestamp_id"] = self.timestamp_id
-        self.run_name = f"{kwargs['name_model']}_{self.timestamp_id}"
+        self.run_name = f"{kwargs['config_name']}_{self.timestamp_id}"
         # Early stopping with file creation?
 
         if load:

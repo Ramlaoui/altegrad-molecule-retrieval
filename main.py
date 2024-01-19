@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="random seed")
 
     parser.add_argument("--epochs", type=int, help="number of epochs to train")
+    parser.add_argument("--batch_size", type=int, help="batch size to use for training")
 
     parser.add_argument(
         "--is_debug",
@@ -75,6 +76,15 @@ if __name__ == "__main__":
 
     config["name_model"] = config_file
     config["model_object"] = model
+    config["config_name"] = args.config
+
+    # Update epochs:
+    if "epochs" in config:
+        config["optim"]["max_epochs"] = config["epochs"]
+        del config["epochs"]
+    if "batch_size" in config:
+        config["optim"]["batch_size"] = config["batch_size"]
+        del config["batch_size"]
 
     for arg in vars(args):
         config[arg] = getattr(args, arg)
