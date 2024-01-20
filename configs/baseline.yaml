@@ -19,3 +19,6 @@ default:
 scibert:
   model:
     model_name: allenai/scibert_scivocab_uncased
+
+molt5:
+    model_name: laituan245/molt5-large-smiles2caption
