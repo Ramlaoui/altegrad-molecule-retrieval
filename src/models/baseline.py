@@ -31,6 +31,7 @@ class BaseGraphEncoder(nn.Module):
         x = global_mean_pool(x, batch)
         x = self.mol_hidden1(x).relu()
         x = self.mol_hidden2(x)
+        x = self.ln(x)
         return x
 
 

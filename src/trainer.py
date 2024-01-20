@@ -181,6 +181,15 @@ class BaseTrainer:
                 batch.pop("attention_mask")
                 graph_batch = batch
 
+                if not self.is_debug:
+                    self.logger.log(
+                        {
+                            "lr": self.optimizer.param_groups[0]["lr"],
+                            "text_size": input_ids.shape,
+                            "graph_size": graph_batch.x.shape,
+                        }
+                    )
+
                 x_graph, x_text = self.model(
                     graph_batch.to(self.device),
                     input_ids.to(self.device),
