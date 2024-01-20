@@ -181,14 +181,12 @@ class BaseTrainer:
                 batch.pop("attention_mask")
                 graph_batch = batch
 
-                if not self.is_debug:
-                    self.logger.log(
-                        {
-                            "lr": self.optimizer.param_groups[0]["lr"],
-                            "text_size": input_ids.shape,
-                            "graph_size": graph_batch.x.shape,
-                        }
-                    )
+                # if not self.is_debug:
+                #     self.logger.log(
+                #         {
+                #             "lr": self.optimizer.param_groups[0]["lr"],
+                #         }
+                #     )
 
                 x_graph, x_text = self.model(
                     graph_batch.to(self.device),
@@ -247,10 +245,13 @@ class BaseTrainer:
                     print("validation loss improoved saving checkpoint...")
                 self.save_path = (
                     self.config["checkpoint_dir"]
-                    + f"/best_checkpoint_{self.run_name}_{i}.pt"
+                    + f"/best_checkpoint_{self.run_name}.pt"
                 )
                 if not (Path(self.config["checkpoint_dir"])).exists():
                     os.makedirs(Path(self.config["checkpoint_dir"]), exist_ok=True)
+                # If file exists, delete it
+                if os.path.exists(self.save_path):
+                    os.remove(self.save_path)
                 torch.save(
                     {
                         "epoch": i,

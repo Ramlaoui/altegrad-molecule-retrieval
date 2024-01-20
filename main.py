@@ -78,6 +78,9 @@ if __name__ == "__main__":
     config["model_object"] = model
     config["config_name"] = args.config
 
+    for arg in vars(args):
+        config[arg] = getattr(args, arg)
+
     # Update epochs:
     if "epochs" in config:
         config["optim"]["max_epochs"] = config["epochs"]
@@ -85,9 +88,6 @@ if __name__ == "__main__":
     if "batch_size" in config:
         config["optim"]["batch_size"] = config["batch_size"]
         del config["batch_size"]
-
-    for arg in vars(args):
-        config[arg] = getattr(args, arg)
 
     trainer = BaseTrainer(**config, load=True)
     trainer.train()

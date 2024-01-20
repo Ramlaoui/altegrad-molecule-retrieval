@@ -8,9 +8,9 @@ default:
   optim:
     optimizer: AdamW
     scheduler: LinearWarmupCosineAnnealingLR #
-    batch_size: 32
-    eval_batch_size: 32
-    lr_initial: 2e-5
+    batch_size: 16
+    eval_batch_size: 16
+    lr_initial: 1e-5
     weight_decay: 0.01
     loss: contrastive
     max_epochs: 1
@@ -19,6 +19,3 @@ default:
 scibert:
   model:
     model_name: allenai/scibert_scivocab_uncased
-
-molt5:
-    model_name: laituan245/molt5-large-smiles2caption
