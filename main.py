@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--epochs", type=int, help="number of epochs to train")
     parser.add_argument("--batch_size", type=int, help="batch size to use for training")
+    parser.add_argument("--lr", type=float, help="learning rate to use for training")
 
     parser.add_argument(
         "--is_debug",
@@ -100,6 +101,9 @@ if __name__ == "__main__":
         config["optim"]["batch_size"] = config["batch_size"]
         del config["batch_size"]
         config["optim"]["eval_batch_size"] = config["optim"]["batch_size"]
+    if "lr" in config:
+        config["optim"]["lr_initial"] = config["lr"]
+        del config["lr"]
 
     if "checkpoint_name" in config:
         trainer = BaseTrainer(**config, load=False)
