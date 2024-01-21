@@ -24,6 +24,13 @@ if __name__ == "__main__":
         default="bert-base-uncased",
         help="name of the model to use",
     )
+
+    parser.add_argument(
+        "--checkpoint_name",
+        type=str,
+        help="name of the checkpoint to load",
+    )
+
     parser.add_argument(
         "--device",
         type=str,
@@ -88,6 +95,11 @@ if __name__ == "__main__":
     if "batch_size" in config:
         config["optim"]["batch_size"] = config["batch_size"]
         del config["batch_size"]
+
+    if "checkpoint_name" in config:
+        trainer = BaseTrainer(**config, load=False)
+        trainer.load_checkpoint(config["checkpoint_name"])
+        trainer.submit_run()
 
     trainer = BaseTrainer(**config, load=True)
     trainer.train()
