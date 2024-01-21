@@ -1,0 +1,25 @@
+default:
+  model:
+    model_name: distilbert-base-uncased
+    num_node_features: 300
+    nout: 256
+    nhid: 300
+    nlayers: 3
+    graph_hidden_channels: 300
+  optim:
+    optimizer: AdamW
+    scheduler: LinearWarmupCosineAnnealingLR #
+    batch_size: 16
+    eval_batch_size: 16
+    lr_initial: 1e-5
+    weight_decay: 0.01
+    loss: contrastive
+    max_epochs: 5
+    # lr_gamma: 0.9
+
+scibert:
+  model:
+    model_name: allenai/scibert_scivocab_uncased
+  optim:
+    lr_initial: 2e-5
+    max_epochs: 10

@@ -6,11 +6,13 @@ from src.trainer import BaseTrainer
 from src.models.baseline import Baseline
 from src.models.gat import GATModel
 from src.models.basicproj import BasicProj
+from src.models.gin import GINMol
 
 MODELS_DICT = {
     "baseline": Baseline,
     "gat": GATModel,
     "basicproj": BasicProj,
+    "gin": GINMol,
 }
 
 if __name__ == "__main__":

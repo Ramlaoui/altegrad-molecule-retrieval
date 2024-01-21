@@ -5,6 +5,7 @@ from torch_geometric.loader import DataLoader
 from torch.utils.data import DataLoader as TorchDataLoader
 from src.models.baseline import Baseline
 from src.models.gat import GATModel
+from src.models.gin import GINMol
 from src.models.basicproj import BasicProj
 import numpy as np
 from transformers import AutoTokenizer
@@ -326,9 +327,6 @@ class BaseTrainer:
         return cosine_similarity, mrr
 
     def submit_run(self, split="test", load_checkpoint=True):
-        if not self.silent:
-            print("loading best model...")
-
         if split == "val":
             self.load_val_text_graph_dataloaders()
         else:
@@ -345,6 +343,9 @@ class BaseTrainer:
                 pass
 
         if load_checkpoint:
+            if not self.silent:
+                print("loading best model...")
+
             self.load_model()
             self.model.load_state_dict(torch.load(self.save_path)["model_state_dict"])
         self.model.eval()
