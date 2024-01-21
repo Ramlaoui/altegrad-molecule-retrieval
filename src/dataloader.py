@@ -103,6 +103,11 @@ class GraphTextDataset(Dataset):
         data = torch.load(osp.join(self.processed_dir, "data_{}.pt".format(cid)))
         return data
 
+    def to_graph_dataset(self):
+        return GraphDataset(
+            self.root, self.gt, self.split, transform=None, pre_transform=None
+        )
+
 
 class GraphDataset(Dataset):
     def __init__(self, root, gt, split, transform=None, pre_transform=None):

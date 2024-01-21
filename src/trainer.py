@@ -112,6 +112,25 @@ class BaseTrainer:
             shuffle=False,
         )
 
+    def load_val_text_graph_dataloaders(self):
+        if "tokenizer" not in self.__dict__:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.config["model_name"])
+        if "gt" not in self.__dict__:
+            self.gt = np.load("./data/token_embedding_dict.npy", allow_pickle=True)[()]
+
+        self.val_cids_dataset = GraphDataset(
+            root="./data/", gt=self.gt, split="val_cids"
+        )
+        self.val_text_dataset = TextDataset(
+            file_path="./data/val_text.txt", tokenizer=self.tokenizer
+        )
+
+        self.val_gt_loader = DataLoader(
+            self.test_cids_dataset,
+            batch_size=self.config["optim"]["eval_batch_size"],
+            shuffle=False,
+        )
+
     def get_dataloader(self):
         batch_size = self.config["optim"]["batch_size"]
         max_epochs = self.config["optim"].get("max_epochs", -1)
@@ -245,7 +264,7 @@ class BaseTrainer:
                     print("validation loss improoved saving checkpoint...")
                 self.save_path = (
                     self.config["checkpoint_dir"]
-                    + f"/best_checkpoint_{self.run_name}.pt"
+                    + f"/best_checkpoint_{self.run_name}_{self.timestamp_id}.pt"
                 )
                 if not (Path(self.config["checkpoint_dir"])).exists():
                     os.makedirs(Path(self.config["checkpoint_dir"]), exist_ok=True)
@@ -265,16 +284,49 @@ class BaseTrainer:
                 if not self.silent:
                     print("checkpoint saved to: {}".format(self.save_path))
 
-    def submit_run(self):
+        # if not self.silent:
+        #     print("Submitting run on validation set...")
+        # cosine_similarity = self.submit_run(split="val")
+
+    def load_checkpoint(self, checkpoint_name=None):
+        if checkpoint_name is None:
+            checkpoint_name = f"best_checkpoint_{self.run_name}_{self.timestamp_id}.pt"
+        checkpoint_path = self.config["checkpoint_dir"] + f"/{checkpoint_name}"
+        self.save_path = checkpoint_path
+        checkpoint = torch.load(checkpoint_path)
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.model.eval()
+
+    def get_mrr_val(self):
+        cosine_similarity = self.submit_run(split="val")
+
+        true_cids = self.val_dataset.cids()
+        true_cids_ranking = np.zeros_like(cosine_similarity)
+        breakpoint()
+
+        from sklearn.metrics import label_ranking_average_precision_score
+
+        mrr = label_ranking_average_precision_score(
+            np.array(true_cids), np.array(cosine_similarity)
+        )
+
+    def submit_run(self, split="test"):
         if not self.silent:
             print("loading best model...")
-        self.load_test_dataloader()
+
+        if split == "val":
+            self.load_val_text_graph_dataloaders()
+        else:
+            self.load_test_dataloader()
 
         # delete train val loaders to free memory
-        del self.train_loader
-        del self.val_loader
-        del self.train_dataset
-        del self.val_dataset
+        try:
+            del self.train_loader
+            del self.val_loader
+            del self.train_dataset
+            del self.val_dataset
+        except:
+            pass
 
         self.load_model()
         checkpoint = torch.load(self.save_path)
@@ -286,18 +338,27 @@ class BaseTrainer:
         graph_model = self.model.get_graph_encoder()
         text_model = self.model.get_text_encoder()
 
-        idx_to_cid = self.test_cids_dataset.get_idx_to_cid()
+        if split == "val":
+            text_dataset = self.val_text_dataset
+            graph_dataset = self.val_cids_dataset
+            loader = self.val_gt_loader
+        else:
+            text_dataset = self.test_text_dataset
+            graph_dataset = self.test_cids_dataset
+            loader = self.test_loader
+
+        # idx_to_cid = graph_dataset.get_idx_to_cid()
 
         graph_embeddings = []
-        for batch in self.test_loader:
+        for batch in loader:
             for output in graph_model(batch.to(self.device)):
                 graph_embeddings.append(output.tolist())
 
-        test_text_loader = TorchDataLoader(
-            self.test_text_dataset, batch_size=batch_size, shuffle=False
+        text_loader = TorchDataLoader(
+            text_dataset, batch_size=batch_size, shuffle=False
         )
         text_embeddings = []
-        for batch in test_text_loader:
+        for batch in text_loader:
             for output in text_model(
                 batch["input_ids"].to(self.device),
                 attention_mask=batch["attention_mask"].to(self.device),
@@ -313,10 +374,13 @@ class BaseTrainer:
             os.makedirs(Path(self.config["results_dir"]), exist_ok=True)
         solution.to_csv(
             os.path.join(
-                self.config["results_dir"], f"results_{self.timestamp_id}.csv"
+                self.config["results_dir"],
+                f"results_{split}_{self.run_name}_{self.timestamp_id}.csv",
             ),
             index=False,
         )
+
+        return similarity
 
 
 # model = Model(
