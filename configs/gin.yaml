@@ -4,7 +4,7 @@ default:
     num_node_features: 300
     nout: 256
     nhid: 300
-    nlayers: 3
+    nlayers: 5
     graph_hidden_channels: 300
   optim:
     optimizer: AdamW

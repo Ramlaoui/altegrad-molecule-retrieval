@@ -84,7 +84,7 @@ class QFormer(nn.Module):
 
         labels = torch.arange(
             batch_size, dtype=torch.long, device=features_graph.device
-        )  # 大小为B
+        )
         loss_graph = F.cross_entropy(logits_per_graph, labels)
         loss_text = F.cross_entropy(logits_per_text, labels)
         loss = (loss_graph + loss_text) / 2
@@ -101,7 +101,6 @@ class QFormer(nn.Module):
 
         # batch_node = self.ln_graph(batch_node, batch_mask)
         query_tokens = self.query_tokens.expand(batch_node.shape[0], -1, -1)
-        breakpoint()
         query_output = self.qformer.bert(
             query_embeds=query_tokens,
             encoder_hidden_states=batch_node,

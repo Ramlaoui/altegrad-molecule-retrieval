@@ -25,11 +25,10 @@ class GINEncoder(nn.Module):
         self.nhid = nhid
         self.nout = nout
         self.relu = nn.ReLU()
-        self.ln1 = nn.LayerNorm((graph_hidden_channels))
-        self.ln2 = nn.LayerNorm((nout))
         self.layers = nn.ModuleList()
         self.mlps = nn.ModuleList()
-        for _ in range(nlayers):
+        self.bns = nn.ModuleList()
+        for i in range(nlayers):
             self.mlps.append(
                 nn.Sequential(
                     nn.Linear(graph_hidden_channels, 2 * graph_hidden_channels),
@@ -37,21 +36,13 @@ class GINEncoder(nn.Module):
                     nn.Linear(2 * graph_hidden_channels, graph_hidden_channels),
                 )
             )
-        for _ in range(nlayers - 1):
+            self.bns.append(nn.BatchNorm1d(graph_hidden_channels))
             self.layers.append(
                 GINConv(
-                    nn.Sequential(
-                        nn.Linear(graph_hidden_channels, 2 * graph_hidden_channels),
-                        nn.ReLU(),
-                        nn.Linear(2 * graph_hidden_channels, graph_hidden_channels),
-                    ),
-                    train_eps=True,
+                    self.mlps[i],
+                    train_eps=False,
                 )
             )
-
-        self.bns = nn.ModuleList()
-        for _ in range(nlayers):
-            self.bns.append(nn.BatchNorm1d(graph_hidden_channels))
 
         self.projection1 = nn.Linear(graph_hidden_channels, nhid)
         self.projection2 = nn.Linear(nhid, nout)
@@ -88,10 +79,6 @@ class GINEncoder(nn.Module):
 
         h_graph = global_mean_pool(node_representation, batch)
 
-        x = self.projection1(h_graph).relu()
-        x = self.dropout(x)
-        x = self.projection2(x)
-
         if self.type_model == "qformer":
             batch_node, batch_mask = to_dense_batch(node_representation, batch)
             batch_mask = batch_mask.bool()
@@ -108,8 +95,12 @@ class GINEncoder(nn.Module):
             )
 
             batch_node = self.ln(batch_node)
-            return batch_node, batch_mask, x
+            return batch_node, batch_mask, h_graph
         else:
+            x = self.projection1(h_graph).relu()
+            x = self.dropout(x)
+            x = self.projection2(x)
+
             return x
 
 
