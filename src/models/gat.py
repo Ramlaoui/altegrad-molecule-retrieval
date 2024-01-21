@@ -77,7 +77,7 @@ class BaseTextEncoder(nn.Module):
         super(BaseTextEncoder, self).__init__()
         self.bert = AutoModel.from_pretrained(model_name)
         self.dropout = nn.Dropout(0.1)
-        self.text_proj1 = nn.Linear(768, nhid)
+        self.text_proj1 = nn.Linear(768, nout)
         self.ln1 = nn.LayerNorm((nout))
 
     def forward(self, input_ids, attention_mask):
