@@ -23,7 +23,6 @@ class GATEncoder(nn.Module):
         self.nhid = nhid
         self.nout = nout
         self.relu = nn.ReLU()
-        self.ln = nn.LayerNorm((nout))
         self.conv1 = GATConv(num_node_features, graph_hidden_channels, heads=nheads)
         self.conv2 = GATConv(
             nheads * graph_hidden_channels, graph_hidden_channels, heads=nheads
@@ -33,6 +32,8 @@ class GATEncoder(nn.Module):
         )
         self.mol_hidden1 = nn.Linear(graph_hidden_channels, nhid)
         self.mol_hidden2 = nn.Linear(nhid, nout)
+        self.ln1 = nn.LayerNorm((graph_hidden_channels))
+        self.ln2 = nn.LayerNorm((nout))
 
     def forward(self, graph_batch):
         x = graph_batch.x
@@ -50,7 +51,7 @@ class GATEncoder(nn.Module):
             batch_node, batch_mask = to_dense_batch(x, batch)
             batch_mask = batch_mask.bool()
 
-            batch_node = torch.cat((x.unsqueeze(1), batch_node), dim=1)
+            batch_node = torch.cat((x_graph.unsqueeze(1), batch_node), dim=1)
             batch_mask = torch.cat(
                 (
                     torch.ones(
@@ -61,12 +62,12 @@ class GATEncoder(nn.Module):
                 dim=1,
             )
 
-            batch_node = self.ln(batch_node)
+            batch_node = self.ln1(batch_node)
             return batch_node, batch_mask, x_graph
         else:
             x = self.mol_hidden1(x_graph).relu()
             x = self.mol_hidden2(x)
-            x = self.ln(x)
+            x = self.ln2(x)
 
             return x
 

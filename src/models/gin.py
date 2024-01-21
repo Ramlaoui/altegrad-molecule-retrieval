@@ -47,7 +47,8 @@ class GINEncoder(nn.Module):
         self.projection1 = nn.Linear(graph_hidden_channels, nhid)
         self.projection2 = nn.Linear(nhid, nout)
         self.dropout = nn.Dropout(0.1)
-        self.ln = nn.LayerNorm((graph_hidden_channels))
+        self.ln1 = nn.LayerNorm((graph_hidden_channels))
+        self.ln2 = nn.LayerNorm((nout))
 
         # self.gin = GIN(
         #     num_node_features,
@@ -94,12 +95,13 @@ class GINEncoder(nn.Module):
                 dim=1,
             )
 
-            batch_node = self.ln(batch_node)
+            batch_node = self.ln1(batch_node)
             return batch_node, batch_mask, h_graph
         else:
             x = self.projection1(h_graph).relu()
             x = self.dropout(x)
             x = self.projection2(x)
+            x = self.ln2(x)
 
             return x
 
