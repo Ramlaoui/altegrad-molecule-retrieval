@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from torch_geometric.nn import GINConv, global_mean_pool
 from src.models.bert_blip import BertLMHeadModel, BertConfig
 from src.models.gin import GINEncoder
+from src.models.gat import GATEncoder
 
 
 class QFormer(nn.Module):
@@ -16,6 +17,7 @@ class QFormer(nn.Module):
         nlayers,
         graph_hidden_channels,
         num_query_token,
+        graph_encoder_type="gin",
         cross_attention_freq=2,
         temperature=0.07,
     ):
@@ -46,15 +48,26 @@ class QFormer(nn.Module):
         )
         self.query_tokens.data.normal_(mean=0.0, std=encoder_config.initializer_range)
 
-        self.graph_encoder = GINEncoder(
-            num_node_features,
-            nout,
-            nhid,
-            nlayers,
-            graph_hidden_channels,
-            type_model="qformer",
-        )
-        # self.ln_graph = nn.LayerNorm((num_node_features))
+        if graph_encoder_type == "gin":
+            self.graph_encoder = GINEncoder(
+                num_node_features,
+                nout,
+                nhid,
+                nlayers,
+                graph_hidden_channels,
+                type_model="qformer",
+            )
+            # self.ln_graph = nn.LayerNorm((num_node_features))
+        elif self.encoder_type == "gat":
+            self.graph_encoder = GATEncoder(
+                model_name,
+                num_node_features,
+                nout,
+                nhid,
+                nlayers,
+                graph_hidden_channels,
+                type_model="qformer",
+            )
 
         self.graph_proj = nn.Linear(self.qformer.config.hidden_size, nout)
         self.text_proj = nn.Linear(self.qformer.config.hidden_size, nout)

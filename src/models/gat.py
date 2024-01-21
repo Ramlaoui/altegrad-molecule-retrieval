@@ -1,14 +1,25 @@
+import torch
 from torch import nn
 import torch.nn.functional as F
 
 from torch_geometric.nn import GCNConv, GATConv
 from torch_geometric.nn import global_mean_pool
+from torch_geometric.utils import to_dense_batch
 from transformers import AutoModel
 
 
-class GraphEncoder(nn.Module):
-    def __init__(self, num_node_features, nout, nhid, nheads, graph_hidden_channels):
-        super(GraphEncoder, self).__init__()
+class GATEncoder(nn.Module):
+    def __init__(
+        self,
+        num_node_features,
+        nout,
+        nhid,
+        nheads,
+        graph_hidden_channels,
+        type_model="encoder",
+    ):
+        super(GATEncoder, self).__init__()
+        self.type_model = type_model
         self.nhid = nhid
         self.nout = nout
         self.relu = nn.ReLU()
@@ -32,11 +43,32 @@ class GraphEncoder(nn.Module):
         x = self.conv2(x, edge_index)
         x = x.relu()
         x = self.conv3(x, edge_index)
-        x = global_mean_pool(x, batch)
-        x = self.mol_hidden1(x).relu()
-        x = self.mol_hidden2(x)
-        x = self.ln(x)
-        return x
+
+        x_graph = global_mean_pool(x, batch)
+
+        if self.type_model == "qformer":
+            batch_node, batch_mask = to_dense_batch(x, batch)
+            batch_mask = batch_mask.bool()
+
+            batch_node = torch.cat((x.unsqueeze(1), batch_node), dim=1)
+            batch_mask = torch.cat(
+                (
+                    torch.ones(
+                        (batch_mask.shape[0], 1), dtype=torch.bool, device=batch.device
+                    ),
+                    batch_mask,
+                ),
+                dim=1,
+            )
+
+            batch_node = self.ln(batch_node)
+            return batch_node, batch_mask, x_graph
+        else:
+            x = self.mol_hidden1(x_graph).relu()
+            x = self.mol_hidden2(x)
+            x = self.ln(x)
+
+            return x
 
 
 class BaseTextEncoder(nn.Module):
@@ -58,7 +90,7 @@ class GATModel(nn.Module):
         self, model_name, num_node_features, nout, nhid, nheads, graph_hidden_channels
     ):
         super(GATModel, self).__init__()
-        self.graph_encoder = GraphEncoder(
+        self.graph_encoder = GATEncoder(
             num_node_features, nout, nhid, nheads, graph_hidden_channels
         )
         self.text_encoder = BaseTextEncoder(model_name)

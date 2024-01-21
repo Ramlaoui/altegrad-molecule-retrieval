@@ -245,6 +245,9 @@ class BaseTrainer:
                         )
                     loss = 0
             self.model.eval()
+            if self.config["model_object"] == QFormer:
+                val_loss_gtc = 0
+                val_loss_gtm = 0
             val_loss = 0
             for batch in self.val_loader:
                 input_ids = batch.input_ids
@@ -252,12 +255,22 @@ class BaseTrainer:
                 attention_mask = batch.attention_mask
                 batch.pop("attention_mask")
                 graph_batch = batch
-                x_graph, x_text = self.model(
-                    graph_batch.to(self.device),
-                    input_ids.to(self.device),
-                    attention_mask.to(self.device),
-                )
-                current_loss = contrastive_loss(x_graph, x_text)
+                if self.config["model_object"] == QFormer:
+                    loss_gtc, loss_gtm = self.model(
+                        graph_batch.to(self.device),
+                        input_ids.to(self.device),
+                        attention_mask.to(self.device),
+                    )
+                    current_loss = loss_gtm + loss_gtc
+                    val_loss_gtc += loss_gtc.item()
+                    val_loss_gtm += loss_gtm.item()
+                else:
+                    x_graph, x_text = self.model(
+                        graph_batch.to(self.device),
+                        input_ids.to(self.device),
+                        attention_mask.to(self.device),
+                    )
+                    current_loss = contrastive_loss(x_graph, x_text)
                 val_loss += current_loss.item()
             self.best_validation_loss = min(self.best_validation_loss, val_loss)
             if not self.silent:
@@ -266,11 +279,19 @@ class BaseTrainer:
                     str(val_loss / len(self.val_loader)),
                 )
             if not self.is_debug:
+                log_dict = {
+                    "validation_loss": val_loss / len(self.val_loader),
+                    "epoch": i,
+                }
+                if self.config["model_object"] == QFormer:
+                    log_dict["validation_loss_gtc"] = val_loss_gtc / len(
+                        self.val_loader
+                    )
+                    log_dict["validation_loss_gtm"] = val_loss_gtm / len(
+                        self.val_loader
+                    )
                 self.logger.log(
-                    {
-                        "validation_loss": val_loss / len(self.val_loader),
-                        "epoch": i,
-                    }
+                    log_dict,
                 )
             if self.best_validation_loss == val_loss:
                 if not self.silent:

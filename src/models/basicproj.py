@@ -38,18 +38,20 @@ class BaseGraphEncoder(nn.Module):
 
 
 class BaseTextEncoder(nn.Module):
-    def __init__(self, model_name, nout):
+    def __init__(self, model_name, nout, nhid):
         super(BaseTextEncoder, self).__init__()
         self.bert = AutoModel.from_pretrained(model_name)
-        self.linear1 = nn.Linear(768, nout)
+        self.linear1 = nn.Linear(768, nhid)
+        self.linear2 = nn.Linear(nhid, nout)
         self.dropout = nn.Dropout(0.1)
 
     def forward(self, input_ids, attention_mask):
         encoded_text = self.bert(input_ids, attention_mask=attention_mask)
         # print(encoded_text.last_hidden_state.size())
         x = encoded_text.last_hidden_state[:, 0, :]
-        x = self.linear1(x)
+        x = self.linear1(x).relu()
         x = self.dropout(x)
+        x = self.linear2(x)
         return x
 
 
@@ -61,7 +63,7 @@ class BasicProj(nn.Module):
         self.graph_encoder = BaseGraphEncoder(
             num_node_features, nout, nhid, graph_hidden_channels
         )
-        self.text_encoder = BaseTextEncoder(model_name, nout)
+        self.text_encoder = BaseTextEncoder(model_name, nout, nhid)
 
     def forward(self, graph_batch, input_ids, attention_mask):
         graph_encoded = self.graph_encoder(graph_batch)
