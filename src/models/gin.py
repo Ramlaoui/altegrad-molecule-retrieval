@@ -1,7 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
 
-from torch_geometric.nn import GIN
+from torch_geometric.nn import GINConv
 from torch_geometric.nn import global_mean_pool
 from transformers import AutoModel
 
@@ -12,22 +12,63 @@ class BaseGraphEncoder(nn.Module):
         self.nhid = nhid
         self.nout = nout
         self.relu = nn.ReLU()
-        self.ln = nn.LayerNorm((nout))
-        self.gin = GIN(
-            num_node_features,
-            hidden_channels=graph_hidden_channels,
-            out_channels=nout,
-            num_layers=nlayers,
-            dropout=0.1,
-        )
+        self.ln1 = nn.LayerNorm((graph_hidden_channels))
+        self.ln2 = nn.LayerNorm((nout))
+        self.layers = nn.ModuleList()
+        self.mlps = nn.ModuleList()
+        for _ in range(nlayers):
+            self.mlps.append(
+                nn.Sequential(
+                    nn.Linear(graph_hidden_channels, 2 * graph_hidden_channels),
+                    nn.ReLU(),
+                    nn.Linear(2 * graph_hidden_channels, graph_hidden_channels),
+                )
+            )
+        for _ in range(nlayers - 1):
+            self.layers.append(
+                GINConv(
+                    nn.Sequential(
+                        nn.Linear(graph_hidden_channels, 2 * graph_hidden_channels),
+                        nn.ReLU(),
+                        nn.Linear(2 * graph_hidden_channels, graph_hidden_channels),
+                    ),
+                    train_eps=True,
+                    aggr="add",
+                )
+            )
+
+        self.bns = nn.ModuleList()
+        for _ in range(nlayers):
+            self.bns.append(nn.BatchNorm1d(graph_hidden_channels))
+
+        self.projection1 = nn.Linear(graph_hidden_channels, nhid)
+        self.projection2 = nn.Linear(nhid, nout)
+        self.dropout = nn.Dropout(0.1)
+
+        # self.gin = GIN(
+        #     num_node_features,
+        #     hidden_channels=graph_hidden_channels,
+        #     out_channels=nout,
+        #     num_layers=nlayers,
+        #     dropout=0.1,
+        # )
 
     def forward(self, graph_batch):
         x = graph_batch.x
         edge_index = graph_batch.edge_index
         batch = graph_batch.batch
-        x = self.gin(x, edge_index)
+        x = self.layers[0](x, edge_index).relu()
+        x = self.dropout(x)
+        x = self.bns[0](x)
+        for i, layer in enumerate(self.layers[1:]):
+            x = layer(x, edge_index).relu()
+            x = self.dropout(x)
+            x = self.bns[i](x)
         x = global_mean_pool(x, batch)
-        x = self.ln(x)
+
+        x = self.projection1(x).relu()
+        x = self.dropout(x)
+        x = self.projection2(x)
         return x
 
 
