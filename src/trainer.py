@@ -452,6 +452,11 @@ class BaseTrainer:
             index=False,
         )
 
+        if split == "val":
+            del self.val_cids_dataset
+            del self.val_text_dataset
+            del self.val_gt_loader
+
         return similarity
 
 
