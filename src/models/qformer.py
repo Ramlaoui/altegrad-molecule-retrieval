@@ -225,7 +225,7 @@ class QFormer(nn.Module):
         )
         graph_feats = self.graph_proj(query_output.last_hidden_state)
         graph_feats = F.normalize(graph_feats, p=2, dim=-1)
-        return graph_feats
+        return graph_feats.max(1)[0]
 
     def text_forward(self, input_ids, attention_mask):
         text_output = self.qformer.bert(
