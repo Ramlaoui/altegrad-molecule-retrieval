@@ -73,16 +73,20 @@ class GATEncoder(nn.Module):
 
 
 class BaseTextEncoder(nn.Module):
-    def __init__(self, model_name):
+    def __init__(self, model_name, nout, nhid):
         super(BaseTextEncoder, self).__init__()
         self.bert = AutoModel.from_pretrained(model_name)
         self.dropout = nn.Dropout(0.1)
+        self.text_proj1 = nn.Linear(768, nhid)
+        self.text_proj2 = nn.Linear(nhid, nout)
 
     def forward(self, input_ids, attention_mask):
         encoded_text = self.bert(input_ids, attention_mask=attention_mask)
         # print(encoded_text.last_hidden_state.size())
         x = encoded_text.last_hidden_state[:, 0, :]
+        x = self.text_proj1(x).relu()
         x = self.dropout(x)
+        x = self.text_proj2(x)
         return x
 
 
@@ -94,7 +98,7 @@ class GATModel(nn.Module):
         self.graph_encoder = GATEncoder(
             num_node_features, nout, nhid, nheads, graph_hidden_channels
         )
-        self.text_encoder = BaseTextEncoder(model_name)
+        self.text_encoder = BaseTextEncoder(model_name, nout, nhid)
 
     def forward(self, graph_batch, input_ids, attention_mask):
         graph_encoded = self.graph_encoder(graph_batch)

@@ -2,9 +2,9 @@ default:
   model:
     model_name: distilbert-base-uncased
     num_node_features: 300
-    nout: 768
+    nout: 256
     nhid: 300
-    nheads: 4
+    nheads: 2
     graph_hidden_channels: 300
   optim:
     optimizer: AdamW
