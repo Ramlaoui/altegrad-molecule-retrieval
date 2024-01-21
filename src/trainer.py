@@ -126,7 +126,7 @@ class BaseTrainer:
         )
 
         self.val_gt_loader = DataLoader(
-            self.test_cids_dataset,
+            self.val_cids_dataset,
             batch_size=self.config["optim"]["eval_batch_size"],
             shuffle=False,
         )
@@ -264,7 +264,7 @@ class BaseTrainer:
                     print("validation loss improoved saving checkpoint...")
                 self.save_path = (
                     self.config["checkpoint_dir"]
-                    + f"/best_checkpoint_{self.run_name}_{self.timestamp_id}.pt"
+                    + f"/best_checkpoint_{self.run_name}.pt"
                 )
                 if not (Path(self.config["checkpoint_dir"])).exists():
                     os.makedirs(Path(self.config["checkpoint_dir"]), exist_ok=True)
@@ -284,31 +284,37 @@ class BaseTrainer:
                 if not self.silent:
                     print("checkpoint saved to: {}".format(self.save_path))
 
-        # if not self.silent:
-        #     print("Submitting run on validation set...")
-        # cosine_similarity = self.submit_run(split="val")
+        cosine_similarity, mrr = self.get_mrr_val()
+        if not self.is_debug:
+            self.logger.log({"mrr_val": mrr})
 
     def load_checkpoint(self, checkpoint_name=None):
         if checkpoint_name is None:
-            checkpoint_name = f"best_checkpoint_{self.run_name}_{self.timestamp_id}.pt"
+            checkpoint_name = f"best_checkpoint_{self.run_name}.pt"
         checkpoint_path = self.config["checkpoint_dir"] + f"/{checkpoint_name}"
         self.save_path = checkpoint_path
-        checkpoint = torch.load(checkpoint_path)
-        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.load_model()
+        self.model.load_state_dict(torch.load(checkpoint_path)["model_state_dict"])
         self.model.eval()
 
     def get_mrr_val(self):
+        if not self.silent:
+            print("Submitting run on validation set...")
         cosine_similarity = self.submit_run(split="val")
 
-        true_cids = self.val_dataset.cids()
-        true_cids_ranking = np.zeros_like(cosine_similarity)
-        breakpoint()
+        # true_cids = self.val_cids_dataset.cids
+        true_cids_ranking = np.eye(cosine_similarity.shape[0])
 
         from sklearn.metrics import label_ranking_average_precision_score
 
         mrr = label_ranking_average_precision_score(
-            np.array(true_cids), np.array(cosine_similarity)
+            true_cids_ranking, cosine_similarity
         )
+
+        if not self.silent:
+            print("MRR on validation set: {}".format(mrr))
+
+        return cosine_similarity, mrr
 
     def submit_run(self, split="test"):
         if not self.silent:
@@ -329,8 +335,7 @@ class BaseTrainer:
             pass
 
         self.load_model()
-        checkpoint = torch.load(self.save_path)
-        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.model.load_state_dict(torch.load(self.save_path)["model_state_dict"])
         self.model.eval()
 
         batch_size = self.config["optim"]["eval_batch_size"]

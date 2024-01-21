@@ -99,8 +99,9 @@ if __name__ == "__main__":
     if "checkpoint_name" in config:
         trainer = BaseTrainer(**config, load=False)
         trainer.load_checkpoint(config["checkpoint_name"])
+        trainer.get_mrr_val()
         trainer.submit_run()
-
-    trainer = BaseTrainer(**config, load=True)
-    trainer.train()
-    trainer.submit_run()
+    else:
+        trainer = BaseTrainer(**config, load=True)
+        trainer.train()
+        trainer.submit_run()
