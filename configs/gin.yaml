@@ -2,7 +2,7 @@ default:
   model:
     model_name: distilbert-base-uncased
     num_node_features: 300
-    nout: 256
+    nout: 768
     nhid: 300
     nlayers: 5
     graph_hidden_channels: 300

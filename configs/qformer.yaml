@@ -2,7 +2,7 @@ default:
   model:
     model_name: distilbert-base-uncased
     num_node_features: 300
-    nout: 256
+    nout: 768
     nhid: 300
     num_query_token: 8
     nlayers: 3
@@ -21,6 +21,14 @@ default:
 scibert:
   model:
     model_name: allenai/scibert_scivocab_uncased
+  optim:
+    lr_initial: 2e-5
+    max_epochs: 10
+  
+scibertgat:
+  model:
+    model_name: allenai/scibert_scivocab_uncased
+    graph_encoder_type: gat
   optim:
     lr_initial: 2e-5
     max_epochs: 10
