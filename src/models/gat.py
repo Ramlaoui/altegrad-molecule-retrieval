@@ -78,15 +78,15 @@ class BaseTextEncoder(nn.Module):
         self.bert = AutoModel.from_pretrained(model_name)
         self.dropout = nn.Dropout(0.1)
         self.text_proj1 = nn.Linear(768, nhid)
-        self.text_proj2 = nn.Linear(nhid, nout)
+        self.ln1 = nn.LayerNorm((nout))
 
     def forward(self, input_ids, attention_mask):
         encoded_text = self.bert(input_ids, attention_mask=attention_mask)
         # print(encoded_text.last_hidden_state.size())
         x = encoded_text.last_hidden_state[:, 0, :]
-        x = self.text_proj1(x).relu()
         x = self.dropout(x)
-        x = self.text_proj2(x)
+        x = self.text_proj1(x)
+        x = self.ln1(x)
         return x
 
 

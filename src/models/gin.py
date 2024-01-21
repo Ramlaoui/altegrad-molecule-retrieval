@@ -113,6 +113,7 @@ class BaseTextEncoder(nn.Module):
         self.linear1 = nn.Linear(768, nhid)
         self.linear2 = nn.Linear(nhid, nout)
         self.dropout = nn.Dropout(0.1)
+        self.ln1 = nn.LayerNorm((nout))
 
     def forward(self, input_ids, attention_mask):
         encoded_text = self.bert(input_ids, attention_mask=attention_mask)
@@ -121,6 +122,7 @@ class BaseTextEncoder(nn.Module):
         x = self.linear1(x).relu()
         x = self.dropout(x)
         x = self.linear2(x)
+        x = self.ln1(x)
         return x
 
 

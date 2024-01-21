@@ -18,6 +18,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 import uuid
 
 
@@ -173,8 +174,16 @@ class BaseTrainer:
         self.optimizer = optimizer(
             self.model.parameters(),
             lr=float(self.config["optim"]["lr_initial"]),
-            **self.config["optim"].get("optimizer_params", {}),
+            weight_decay=float(self.config["optim"].get("weight_decay", 0.01)),
         )
+
+        self.scheduler = CosineAnnealingWarmRestarts(
+            self.optimizer,
+            T_0=int(self.config["optim"].get("warmup_steps", 100)),
+            # T_mult=self.config["optim"].get("T_mult", 2),
+            eta_min=float(self.config["optim"].get("lr_min", 0)),
+        )
+        self.clip_grad_norm = self.config["optim"].get("clip_grad_norm")
 
     def load_loss(
         self,
@@ -229,9 +238,16 @@ class BaseTrainer:
                 self.optimizer.zero_grad()
                 current_loss.backward()
                 self.optimizer.step()
+                self.scheduler.step(i + count_iter / len(self.train_loader))
                 loss += current_loss.item()
 
                 count_iter += 1
+                if not self.is_debug:
+                    self.logger.log(
+                        {
+                            "lr": self.optimizer.param_groups[0]["lr"],
+                        }
+                    )
                 if count_iter % print_every == 0:
                     time2 = time.time()
                     self.losses.append(loss)
@@ -322,10 +338,10 @@ class BaseTrainer:
                 if not self.is_debug:
                     self.logger.log({"mrr_val": mrr})
 
-            # Give MRR with best checkpoint
-            cosine_similarity, mrr = self.get_mrr_val(load_checkpoint=True)
-            if not self.is_debug:
-                self.logger.log({"mrr_val": mrr})
+        # Give MRR with best checkpoint
+        cosine_similarity, mrr = self.get_mrr_val(load_checkpoint=True)
+        if not self.is_debug:
+            self.logger.log({"mrr_val": mrr})
 
     def load_checkpoint(self, checkpoint_name=None):
         if checkpoint_name is None:
