@@ -4,9 +4,11 @@ import yaml
 from pathlib import Path
 from src.trainer import BaseTrainer
 from src.models.baseline import Baseline
+from src.models.gat import GATModel
 
 MODELS_DICT = {
     "baseline": Baseline,
+    "gat": GATModel,
 }
 
 if __name__ == "__main__":
@@ -95,6 +97,7 @@ if __name__ == "__main__":
     if "batch_size" in config:
         config["optim"]["batch_size"] = config["batch_size"]
         del config["batch_size"]
+        config["optim"]["eval_batch_size"] = config["optim"]["batch_size"]
 
     if "checkpoint_name" in config:
         trainer = BaseTrainer(**config, load=False)
