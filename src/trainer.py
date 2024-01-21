@@ -7,6 +7,7 @@ from src.models.baseline import Baseline
 from src.models.gat import GATModel
 from src.models.gin import GINMol
 from src.models.basicproj import BasicProj
+from src.models.qformer import QFormer
 import numpy as np
 from transformers import AutoTokenizer
 import torch
@@ -210,12 +211,21 @@ class BaseTrainer:
                 #         }
                 #     )
 
-                x_graph, x_text = self.model(
-                    graph_batch.to(self.device),
-                    input_ids.to(self.device),
-                    attention_mask.to(self.device),
-                )
-                current_loss = contrastive_loss(x_graph, x_text)
+                if self.config["model_object"] == QFormer:
+                    loss_gtc, loss_gtm = self.model(
+                        graph_batch.to(self.device),
+                        input_ids.to(self.device),
+                        attention_mask.to(self.device),
+                    )
+                    current_loss = loss_gtm + loss_gtc
+                else:
+                    x_graph, x_text = self.model(
+                        graph_batch.to(self.device),
+                        input_ids.to(self.device),
+                        attention_mask.to(self.device),
+                    )
+                    current_loss = contrastive_loss(x_graph, x_text)
+
                 self.optimizer.zero_grad()
                 current_loss.backward()
                 self.optimizer.step()
@@ -352,8 +362,16 @@ class BaseTrainer:
 
         batch_size = self.config["optim"]["eval_batch_size"]
 
-        graph_model = self.model.get_graph_encoder()
-        text_model = self.model.get_text_encoder()
+        if self.config["model_object"] == QFormer:
+            graph_model = lambda batch_inputs: self.model.graph_forward(
+                batch_inputs.to(self.device)
+            )
+            text_model = lambda input_ids, attention_mask: self.model.text_forward(
+                input_ids.to(self.device), attention_mask.to(self.device)
+            )
+        else:
+            graph_model = self.model.get_graph_encoder()
+            text_model = self.model.get_text_encoder()
 
         if split == "val":
             text_dataset = self.val_text_dataset

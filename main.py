@@ -7,12 +7,14 @@ from src.models.baseline import Baseline
 from src.models.gat import GATModel
 from src.models.basicproj import BasicProj
 from src.models.gin import GINMol
+from src.models.qformer import QFormer
 
 MODELS_DICT = {
     "baseline": Baseline,
     "gat": GATModel,
     "basicproj": BasicProj,
     "gin": GINMol,
+    "qformer": QFormer,
 }
 
 if __name__ == "__main__":
