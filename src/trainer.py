@@ -5,6 +5,7 @@ from torch_geometric.loader import DataLoader
 from torch.utils.data import DataLoader as TorchDataLoader
 from src.models.baseline import Baseline
 from src.models.gat import GATModel
+from src.models.basicproj import BasicProj
 import numpy as np
 from transformers import AutoTokenizer
 import torch

@@ -5,10 +5,12 @@ from pathlib import Path
 from src.trainer import BaseTrainer
 from src.models.baseline import Baseline
 from src.models.gat import GATModel
+from src.models.basicproj import BasicProj
 
 MODELS_DICT = {
     "baseline": Baseline,
     "gat": GATModel,
+    "basicproj": BasicProj,
 }
 
 if __name__ == "__main__":
