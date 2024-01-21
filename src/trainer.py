@@ -286,9 +286,14 @@ class BaseTrainer:
                 if not self.silent:
                     print("checkpoint saved to: {}".format(self.save_path))
 
-        cosine_similarity, mrr = self.get_mrr_val()
-        if not self.is_debug:
-            self.logger.log({"mrr_val": mrr})
+                cosine_similarity, mrr = self.get_mrr_val(load_checkpoint=False)
+                if not self.is_debug:
+                    self.logger.log({"mrr_val": mrr})
+
+            # Give MRR with best checkpoint
+            cosine_similarity, mrr = self.get_mrr_val(load_checkpoint=True)
+            if not self.is_debug:
+                self.logger.log({"mrr_val": mrr})
 
     def load_checkpoint(self, checkpoint_name=None):
         if checkpoint_name is None:
@@ -299,10 +304,12 @@ class BaseTrainer:
         self.model.load_state_dict(torch.load(checkpoint_path)["model_state_dict"])
         self.model.eval()
 
-    def get_mrr_val(self):
+    def get_mrr_val(self, load_checkpoint=True):
         if not self.silent:
             print("Submitting run on validation set...")
-        cosine_similarity = self.submit_run(split="val")
+        cosine_similarity = self.submit_run(
+            split="val", load_checkpoint=load_checkpoint
+        )
 
         # true_cids = self.val_cids_dataset.cids
         true_cids_ranking = np.eye(cosine_similarity.shape[0])
@@ -318,7 +325,7 @@ class BaseTrainer:
 
         return cosine_similarity, mrr
 
-    def submit_run(self, split="test"):
+    def submit_run(self, split="test", load_checkpoint=True):
         if not self.silent:
             print("loading best model...")
 
@@ -328,16 +335,18 @@ class BaseTrainer:
             self.load_test_dataloader()
 
         # delete train val loaders to free memory
-        try:
-            del self.train_loader
-            del self.val_loader
-            del self.train_dataset
-            del self.val_dataset
-        except:
-            pass
+        if split == "test":
+            try:
+                del self.train_loader
+                del self.val_loader
+                del self.train_dataset
+                del self.val_dataset
+            except:
+                pass
 
-        self.load_model()
-        self.model.load_state_dict(torch.load(self.save_path)["model_state_dict"])
+        if load_checkpoint:
+            self.load_model()
+            self.model.load_state_dict(torch.load(self.save_path)["model_state_dict"])
         self.model.eval()
 
         batch_size = self.config["optim"]["eval_batch_size"]
