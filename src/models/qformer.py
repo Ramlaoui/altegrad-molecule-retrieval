@@ -58,7 +58,7 @@ class QFormer(nn.Module):
                 type_model="qformer",
             )
             # self.ln_graph = nn.LayerNorm((num_node_features))
-        elif self.encoder_type == "gat":
+        elif graph_encoder_type == "gat":
             self.graph_encoder = GATEncoder(
                 model_name,
                 num_node_features,
