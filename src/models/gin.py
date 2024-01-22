@@ -29,9 +29,13 @@ class GINEncoder(nn.Module):
         self.mlps = nn.ModuleList()
         self.bns = nn.ModuleList()
         for i in range(nlayers):
+            if i == 0:
+                n_input = num_node_features
+            else:
+                n_input = graph_hidden_channels
             self.mlps.append(
                 nn.Sequential(
-                    nn.Linear(graph_hidden_channels, 2 * graph_hidden_channels),
+                    nn.Linear(n_input, 2 * graph_hidden_channels),
                     nn.ReLU(),
                     nn.Linear(2 * graph_hidden_channels, graph_hidden_channels),
                 )

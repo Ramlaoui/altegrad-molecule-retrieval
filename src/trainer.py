@@ -480,7 +480,7 @@ class BaseTrainer:
         solution.to_csv(
             os.path.join(
                 self.config["results_dir"],
-                f"results_{split}_{self.run_name}_{self.timestamp_id}.csv",
+                f"results_{split}_{self.run_name}.csv",
             ),
             index=False,
         )
