@@ -1,4 +1,5 @@
 from src.dataloader import GraphTextDataset, GraphDataset, TextDataset
+import yaml
 import wandb
 from pathlib import Path
 from torch_geometric.loader import DataLoader
@@ -58,15 +59,19 @@ class BaseTrainer:
         self.job_id = uuid.uuid4().hex[:8]
         self.config["timestamp_id"] = self.timestamp_id
         self.run_name = f"{kwargs['config_name']}_{self.timestamp_id}"
+        self.saved_checkpoint = False
         # Early stopping with file creation?
 
         if load:
             self.load()
-
-    def load(self):
+    
+    def load(self, checkpoint_name=None):
         self.load_logger()
         self.load_train_val_datasets()
-        self.load_model()
+        if checkpoint_name is not None:
+            self.load_checkpoint(checkpoint_name)
+        else:
+            self.load_model()
         self.load_optimizer()
         self.load_loss()
         self.get_dataloader()
@@ -293,6 +298,7 @@ class BaseTrainer:
                             }
                         )
                     loss = 0
+                break
             self.model.eval()
             if self.config["model_object"] == QFormer:
                 val_loss_gtc = 0
@@ -354,6 +360,17 @@ class BaseTrainer:
                 # If file exists, delete it
                 if os.path.exists(self.save_path):
                     os.remove(self.save_path)
+                if not self.saved_checkpoint:
+                    self.saved_checkpoint = True
+                    config_to_save = self.config.copy()
+                    config_to_save["model_object"] = config_to_save["model_object"].__name__
+                    yaml.dump(
+                        config_to_save,
+                        open(
+                            self.save_path.replace(".pt", ".yaml").replace("best_checkpoint_", ""),
+                            "w",
+                        ),
+                    )
                 torch.save(
                     {
                         "epoch": i,

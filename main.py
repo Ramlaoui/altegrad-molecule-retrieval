@@ -57,6 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, help="number of epochs to train")
     parser.add_argument("--batch_size", type=int, help="batch size to use for training")
     parser.add_argument("--lr", type=float, help="learning rate to use for training")
+    parser.add_argument("--ft", action="store_true", help="whether to finetune the checkpoint if given")
 
     parser.add_argument(
         "--is_debug",
@@ -118,10 +119,26 @@ if __name__ == "__main__":
         del config["lr"]
 
     if "checkpoint_name" in config:
-        trainer = BaseTrainer(**config, load=False)
-        trainer.load_checkpoint(config["checkpoint_name"])
-        trainer.get_mrr_val()
-        trainer.submit_run()
+        if config["ft"]:
+            # TODO: Save the config of the checkpoint?
+            checkpoint_dir = Path("runs/checkpoints/")
+            configs_in_path = [x for x in checkpoint_dir.iterdir() if ((".yaml" in x.name) and (config["checkpoint_name"].replace("best_checkpoint_", "").replace(".pt", "") in x.name))]
+            old_config = config
+            if len(configs_in_path) != 0:
+                with open(configs_in_path[0], "r") as f:
+                    config = yaml.safe_load(f)
+                config["model_object"] = eval(config["model_object"])
+                config["checkpoint_name"] = old_config["checkpoint_name"]
+            trainer = BaseTrainer(**config, load=False)
+            trainer.run_name = config["checkpoint_name"].replace("best_checkpoint_", "").replace(".pt", "") + "_ft"
+            trainer.load(checkpoint_name=config["checkpoint_name"])
+            trainer.train()
+            trainer.submit_run()
+        else:
+            trainer = BaseTrainer(**config, load=False)
+            trainer.load_checkpoint(config["checkpoint_name"])
+            trainer.get_mrr_val()
+            trainer.submit_run()
     else:
         trainer = BaseTrainer(**config, load=True)
         trainer.train()
