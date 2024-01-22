@@ -220,24 +220,57 @@ class BaseTrainer:
                 #         }
                 #     )
 
-                if self.config["model_object"] == QFormer:
-                    loss_gtc, loss_gtm = self.model(
-                        graph_batch.to(self.device),
-                        input_ids.to(self.device),
-                        attention_mask.to(self.device),
-                    )
-                    current_loss = loss_gtm + loss_gtc
+                if self.config.get("precision", "float32") == "float16":
+                    if self.device.type != "cuda":
+                        scaler = None
+                        dtype = torch.bfloat16
+                    else:
+                        scaler = torch.cuda.amp.GradScaler()
+                        dtype = torch.float16
+                    with torch.autocast(device_type=self.device.type, dtype=dtype):
+                        graph_batch.x = graph_batch.x.float()
+                        if self.config["model_object"] == QFormer:
+                            loss_gtc, loss_gtm = self.model(
+                                graph_batch.to(self.device),
+                                input_ids.to(self.device),
+                                attention_mask.to(self.device),
+                            )
+                            current_loss = loss_gtm + loss_gtc
+                        else:
+                            x_graph, x_text = self.model(
+                                graph_batch.to(self.device),
+                                input_ids.to(self.device),
+                                attention_mask.to(self.device),
+                            )
+                            current_loss = contrastive_loss(x_graph, x_text)
+                        if scaler is not None:
+                            self.optimizer.zero_grad()
+                            scaler.scale(current_loss).backward()
+                            scaler.step(self.optimizer)
+                            scaler.update()
+                        else:
+                            self.optimizer.zero_grad()
+                            current_loss.backward()
+                            self.optimizer.step()
                 else:
-                    x_graph, x_text = self.model(
-                        graph_batch.to(self.device),
-                        input_ids.to(self.device),
-                        attention_mask.to(self.device),
-                    )
-                    current_loss = contrastive_loss(x_graph, x_text)
+                    if self.config["model_object"] == QFormer:
+                        loss_gtc, loss_gtm = self.model(
+                            graph_batch.to(self.device),
+                            input_ids.to(self.device),
+                            attention_mask.to(self.device),
+                        )
+                        current_loss = loss_gtm + loss_gtc
+                    else:
+                        x_graph, x_text = self.model(
+                            graph_batch.to(self.device),
+                            input_ids.to(self.device),
+                            attention_mask.to(self.device),
+                        )
+                        current_loss = contrastive_loss(x_graph, x_text)
 
-                self.optimizer.zero_grad()
-                current_loss.backward()
-                self.optimizer.step()
+                    self.optimizer.zero_grad()
+                    current_loss.backward()
+                    self.optimizer.step()
                 self.scheduler.step(i + count_iter / len(self.train_loader))
                 loss += current_loss.item()
 
@@ -311,7 +344,7 @@ class BaseTrainer:
                 )
             if self.best_validation_loss == val_loss:
                 if not self.silent:
-                    print("validation loss improoved saving checkpoint...")
+                    print("validation loss improved saving checkpoint...")
                 self.save_path = (
                     self.config["checkpoint_dir"]
                     + f"/best_checkpoint_{self.run_name}.pt"

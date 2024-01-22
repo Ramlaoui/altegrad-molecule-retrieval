@@ -44,6 +44,14 @@ if __name__ == "__main__":
         type=str,
         help="device to use for training",
     )
+
+    parser.add_argument(
+        "--precision",
+        type=str,
+        default="float32",
+        help="precision to use for training",
+    )
+
     parser.add_argument("--seed", type=int, default=42, help="random seed")
 
     parser.add_argument("--epochs", type=int, help="number of epochs to train")
