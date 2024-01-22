@@ -64,7 +64,7 @@ class BaseTrainer:
 
         if load:
             self.load()
-    
+
     def load(self, checkpoint_name=None):
         self.load_logger()
         self.load_train_val_datasets()
@@ -298,7 +298,6 @@ class BaseTrainer:
                             }
                         )
                     loss = 0
-                break
             self.model.eval()
             if self.config["model_object"] == QFormer:
                 val_loss_gtc = 0
@@ -363,11 +362,15 @@ class BaseTrainer:
                 if not self.saved_checkpoint:
                     self.saved_checkpoint = True
                     config_to_save = self.config.copy()
-                    config_to_save["model_object"] = config_to_save["model_object"].__name__
+                    config_to_save["model_object"] = config_to_save[
+                        "model_object"
+                    ].__name__
                     yaml.dump(
                         config_to_save,
                         open(
-                            self.save_path.replace(".pt", ".yaml").replace("best_checkpoint_", ""),
+                            self.save_path.replace(".pt", ".yaml").replace(
+                                "best_checkpoint_", ""
+                            ),
                             "w",
                         ),
                     )
