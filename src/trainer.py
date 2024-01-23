@@ -232,8 +232,7 @@ class BaseTrainer:
                     else:
                         scaler = torch.cuda.amp.GradScaler()
                         dtype = torch.float16
-                    with torch.autocast(device_type=self.device.type, dtype=dtype):
-                        graph_batch.x = graph_batch.x.float()
+                    with torch.autocast(device_type=self.device.type):
                         if self.config["model_object"] == QFormer:
                             loss_gtc, loss_gtm = self.model(
                                 graph_batch.to(self.device),
@@ -249,8 +248,10 @@ class BaseTrainer:
                             )
                             current_loss = contrastive_loss(x_graph, x_text)
                         if scaler is not None:
+                            breakpoint()
                             self.optimizer.zero_grad()
                             scaler.scale(current_loss).backward()
+                            scaler.unscale_(self.optimizer)
                             scaler.step(self.optimizer)
                             scaler.update()
                         else:

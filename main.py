@@ -159,7 +159,6 @@ if __name__ == "__main__":
                 config["checkpoint_name"]
                 .replace("best_checkpoint_", "")
                 .replace(".pt", "")
-                + "_ft"
             )
             trainer.load_checkpoint(config["checkpoint_name"])
             trainer.get_mrr_val()
