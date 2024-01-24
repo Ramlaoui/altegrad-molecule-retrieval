@@ -225,40 +225,16 @@ class BaseTrainer:
                 #         }
                 #     )
 
-                if self.config.get("precision", "float32") == "float16":
-                    if self.device.type != "cuda":
-                        scaler = None
-                        dtype = torch.bfloat16
-                    else:
-                        scaler = torch.cuda.amp.GradScaler()
-                        dtype = torch.float16
-                    with torch.autocast(device_type=self.device.type):
-                        if self.config["model_object"] == QFormer:
-                            loss_gtc, loss_gtm = self.model(
-                                graph_batch.to(self.device),
-                                input_ids.to(self.device),
-                                attention_mask.to(self.device),
-                            )
-                            current_loss = loss_gtm + loss_gtc
-                        else:
-                            x_graph, x_text = self.model(
-                                graph_batch.to(self.device),
-                                input_ids.to(self.device),
-                                attention_mask.to(self.device),
-                            )
-                            current_loss = contrastive_loss(x_graph, x_text)
-                        if scaler is not None:
-                            breakpoint()
-                            self.optimizer.zero_grad()
-                            scaler.scale(current_loss).backward()
-                            scaler.unscale_(self.optimizer)
-                            scaler.step(self.optimizer)
-                            scaler.update()
-                        else:
-                            self.optimizer.zero_grad()
-                            current_loss.backward()
-                            self.optimizer.step()
+                if self.device.type != "cuda":
+                    scaler = None
+                    dtype = torch.bfloat16
                 else:
+                    scaler = torch.cuda.amp.GradScaler()
+                    dtype = torch.float16
+                with torch.autocast(
+                    device_type=self.device.type,
+                    enabled=self.config.get("precision", "foat32") == "float16",
+                ):
                     if self.config["model_object"] == QFormer:
                         loss_gtc, loss_gtm = self.model(
                             graph_batch.to(self.device),
@@ -273,10 +249,17 @@ class BaseTrainer:
                             attention_mask.to(self.device),
                         )
                         current_loss = contrastive_loss(x_graph, x_text)
+                    if scaler is not None:
+                        self.optimizer.zero_grad()
+                        scaler.scale(current_loss).backward()
+                        scaler.unscale_(self.optimizer)
+                        scaler.step(self.optimizer)
+                        scaler.update()
+                    else:
+                        self.optimizer.zero_grad()
+                        current_loss.backward()
+                        self.optimizer.step()
 
-                    self.optimizer.zero_grad()
-                    current_loss.backward()
-                    self.optimizer.step()
                 self.scheduler.step(i + count_iter / len(self.train_loader))
                 loss += current_loss.item()
 
@@ -310,22 +293,26 @@ class BaseTrainer:
                 attention_mask = batch.attention_mask
                 batch.pop("attention_mask")
                 graph_batch = batch
-                if self.config["model_object"] == QFormer:
-                    loss_gtc, loss_gtm = self.model(
-                        graph_batch.to(self.device),
-                        input_ids.to(self.device),
-                        attention_mask.to(self.device),
-                    )
-                    current_loss = loss_gtm + loss_gtc
-                    val_loss_gtc += loss_gtc.item()
-                    val_loss_gtm += loss_gtm.item()
-                else:
-                    x_graph, x_text = self.model(
-                        graph_batch.to(self.device),
-                        input_ids.to(self.device),
-                        attention_mask.to(self.device),
-                    )
-                    current_loss = contrastive_loss(x_graph, x_text)
+                with torch.autocast(
+                    device_type=self.device.type,
+                    enabled=self.config.get("precision", "foat32") == "float16",
+                ):
+                    if self.config["model_object"] == QFormer:
+                        loss_gtc, loss_gtm = self.model(
+                            graph_batch.to(self.device),
+                            input_ids.to(self.device),
+                            attention_mask.to(self.device),
+                        )
+                        current_loss = loss_gtm + loss_gtc
+                        val_loss_gtc += loss_gtc.item()
+                        val_loss_gtm += loss_gtm.item()
+                    else:
+                        x_graph, x_text = self.model(
+                            graph_batch.to(self.device),
+                            input_ids.to(self.device),
+                            attention_mask.to(self.device),
+                        )
+                        current_loss = contrastive_loss(x_graph, x_text)
                 val_loss += current_loss.item()
             self.best_validation_loss = min(self.best_validation_loss, val_loss)
             if not self.silent:
@@ -476,20 +463,28 @@ class BaseTrainer:
         # idx_to_cid = graph_dataset.get_idx_to_cid()
 
         graph_embeddings = []
-        for batch in loader:
-            for output in graph_model(batch.to(self.device)):
-                graph_embeddings.append(output.tolist())
+        with torch.autocast(
+            device_type=self.device.type,
+            enabled=self.config.get("precision", "foat32") == "float16",
+        ):
+            for batch in loader:
+                for output in graph_model(batch.to(self.device)):
+                    graph_embeddings.append(output.tolist())
 
         text_loader = TorchDataLoader(
             text_dataset, batch_size=batch_size, shuffle=False
         )
         text_embeddings = []
-        for batch in text_loader:
-            for output in text_model(
-                batch["input_ids"].to(self.device),
-                attention_mask=batch["attention_mask"].to(self.device),
-            ):
-                text_embeddings.append(output.tolist())
+        with torch.autocast(
+            device_type=self.device.type,
+            enabled=self.config.get("precision", "foat32") == "float16",
+        ):
+            for batch in text_loader:
+                for output in text_model(
+                    batch["input_ids"].to(self.device),
+                    attention_mask=batch["attention_mask"].to(self.device),
+                ):
+                    text_embeddings.append(output.tolist())
 
         similarity = cosine_similarity(text_embeddings, graph_embeddings)
 
