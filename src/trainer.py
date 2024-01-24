@@ -288,6 +288,8 @@ class BaseTrainer:
                 val_loss_gtc = 0
                 val_loss_gtm = 0
             val_loss = 0
+            if self.device.type == "cuda":
+                torch.cuda.empty_cache()
             for batch in self.val_loader:
                 input_ids = batch.input_ids
                 batch.pop("input_ids")
@@ -399,6 +401,7 @@ class BaseTrainer:
     def get_mrr_val(self, load_checkpoint=True):
         if not self.silent:
             print("Submitting run on validation set...")
+
         cosine_similarity = self.submit_run(
             split="val", load_checkpoint=load_checkpoint
         )
@@ -430,6 +433,8 @@ class BaseTrainer:
                 del self.val_loader
                 del self.train_dataset
                 del self.val_dataset
+                if self.device.type == "cuda":
+                    torch.cuda.empty_cache()
             except:
                 pass
 
