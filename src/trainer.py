@@ -314,7 +314,7 @@ class BaseTrainer:
                             attention_mask.to(self.device),
                         )
                         current_loss = contrastive_loss(x_graph, x_text)
-            val_loss += current_loss.item()
+                val_loss += current_loss.item()
             self.best_validation_loss = min(self.best_validation_loss, val_loss)
             if not self.silent:
                 print(
