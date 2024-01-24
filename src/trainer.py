@@ -379,6 +379,8 @@ class BaseTrainer:
                 cosine_similarity, mrr = self.get_mrr_val(load_checkpoint=False)
                 if not self.is_debug:
                     self.logger.log({"mrr_val": mrr})
+            if self.device.type == "cuda":
+                torch.cuda.empty_cache()
 
         # Give MRR with best checkpoint
         cosine_similarity, mrr = self.get_mrr_val(load_checkpoint=True)
@@ -506,6 +508,8 @@ class BaseTrainer:
             del self.val_cids_dataset
             del self.val_text_dataset
             del self.val_gt_loader
+        if self.device.type == "cuda":
+            torch.cuda.empty_cache()
 
         return similarity
 
