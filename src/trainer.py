@@ -143,12 +143,13 @@ class BaseTrainer:
 
     def get_dataloader(self):
         batch_size = self.config["optim"]["batch_size"]
+        eval_batch_size = self.config["optim"]["eval_batch_size"]
         max_epochs = self.config["optim"].get("max_epochs", -1)
         max_steps = self.config["optim"].get("max_steps", -1)
         max_samples = self.config["optim"].get("max_samples", -1)
 
         self.val_loader = DataLoader(
-            self.val_dataset, batch_size=batch_size, shuffle=True
+            self.val_dataset, batch_size=eval_batch_size, shuffle=True
         )
         self.train_loader = DataLoader(
             self.train_dataset, batch_size=batch_size, shuffle=True
