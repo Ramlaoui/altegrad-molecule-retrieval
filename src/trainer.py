@@ -19,7 +19,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, LRScheduler
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ConstantLR
 import uuid
 
 
@@ -194,9 +194,7 @@ class BaseTrainer:
                 eta_min=float(self.config["optim"].get("lr_min", 0)),
             )
         else:
-            self.scheduler = LRScheduler(
-                self.optimizer,
-            )
+            self.scheduler = ConstantLR()
         self.clip_grad_norm = self.config["optim"].get("clip_grad_norm")
 
     def load_loss(
