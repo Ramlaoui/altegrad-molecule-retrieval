@@ -194,7 +194,10 @@ class BaseTrainer:
                 eta_min=float(self.config["optim"].get("lr_min", 0)),
             )
         else:
-            self.scheduler = ConstantLR()
+            self.scheduler = ConstantLR(
+                self.optimizer,
+                last_epoch=-1,
+            )
         self.clip_grad_norm = self.config["optim"].get("clip_grad_norm")
 
     def load_loss(
