@@ -19,7 +19,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, LRScheduler
 import uuid
 
 
@@ -183,12 +183,20 @@ class BaseTrainer:
             weight_decay=float(self.config["optim"].get("weight_decay", 0.01)),
         )
 
-        self.scheduler = CosineAnnealingWarmRestarts(
-            self.optimizer,
-            T_0=int(self.config["optim"].get("warmup_steps", 100)),
-            # T_mult=self.config["optim"].get("T_mult", 2),
-            eta_min=float(self.config["optim"].get("lr_min", 0)),
-        )
+        if (
+            self.config["optim"].get("scheduler", "cosine")
+            == "LinearWarmupCosineAnnealingLR"
+        ):
+            self.scheduler = CosineAnnealingWarmRestarts(
+                self.optimizer,
+                T_0=int(self.config["optim"].get("warmup_steps", 100)),
+                # T_mult=self.config["optim"].get("T_mult", 2),
+                eta_min=float(self.config["optim"].get("lr_min", 0)),
+            )
+        else:
+            self.scheduler = LRScheduler(
+                self.optimizer,
+            )
         self.clip_grad_norm = self.config["optim"].get("clip_grad_norm")
 
     def load_loss(
