@@ -2,15 +2,15 @@ default:
   model:
     model_name: distilbert-base-uncased
     num_node_features: 300
-    nout: 256
-    nhid: 300
+    nout: 32
+    nhid: 512
     num_query_token: 8
     nlayers: 3
-    graph_hidden_channels: 300
+    graph_hidden_channels: 512
   optim:
     optimizer: AdamW
-    scheduler: LinearWarmupCosineAnnealingLR
-    batch_size: 16
+    scheduler: cosine
+    batch_size: 128
     eval_batch_size: 16
     # warmup_factor: 0.05
     lr_initial: 5e-5
@@ -19,7 +19,7 @@ default:
     # lr_decay_rate: 0.9
     # weight_decay: 0.05
     loss: contrastive
-    max_epochs: 10
+    max_epochs: 25
     # lr_gamma: 0.9
 
 scibert:

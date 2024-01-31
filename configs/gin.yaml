@@ -8,7 +8,7 @@ default:
     graph_hidden_channels: 512
   optim:
     optimizer: AdamW
-    scheduler: LinearWarmupCosineAnnealingLR #
+    scheduler: cosine
     batch_size: 32
     eval_batch_size: 32
     lr_initial: 5e-5

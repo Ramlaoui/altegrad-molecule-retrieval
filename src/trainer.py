@@ -202,7 +202,7 @@ class BaseTrainer:
         self,
     ):
         loss_name = self.config["optim"].get("loss", "contrastive")
-        if self.config["optim"]["loss"] == "contrastive":
+        if loss_name == "contrastive":
             self.CE = torch.nn.CrossEntropyLoss()
             self.loss = lambda v1, v2: contrastive_loss(v1, v2, self.CE)
         else:
@@ -483,8 +483,6 @@ class BaseTrainer:
             graph_dataset = self.test_cids_dataset
             loader = self.test_loader
 
-        # idx_to_cid = graph_dataset.get_idx_to_cid()
-
         graph_embeddings = []
         with torch.autocast(
             device_type=self.device.type,
@@ -498,6 +496,7 @@ class BaseTrainer:
             text_dataset, batch_size=batch_size, shuffle=False
         )
         text_embeddings = []
+
         with torch.autocast(
             device_type=self.device.type,
             enabled=self.config.get("precision", "foat32") == "float16",
