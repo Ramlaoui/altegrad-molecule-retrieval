@@ -142,3 +142,11 @@ class CrossAttentionModel(nn.Module):
         x = x.relu()
         x = self.mol_hidden2(x)
         return x
+
+    def get_graph_encoder(self):
+        return lambda graph_batch: self.forward_graph(graph_batch)
+
+    def get_text_encoder(self):
+        return lambda input_ids, attention_mask: self.forward_text(
+            input_ids, attention_mask
+        )
