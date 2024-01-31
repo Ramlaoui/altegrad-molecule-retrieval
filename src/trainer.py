@@ -184,10 +184,7 @@ class BaseTrainer:
             weight_decay=float(self.config["optim"].get("weight_decay", 0.01)),
         )
 
-        if (
-            self.config["optim"].get("scheduler", "cosine")
-            == "LinearWarmupCosineAnnealingLR"
-        ):
+        if self.config["optim"].get("scheduler", "cosine") == "cosine":
             self.scheduler = CosineAnnealingWarmRestarts(
                 self.optimizer,
                 T_0=int(self.config["optim"].get("warmup_steps", 100)),

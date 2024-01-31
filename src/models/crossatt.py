@@ -124,7 +124,9 @@ class CrossAttentionModel(nn.Module):
         text_encoder_output = self.text_transformer_model(
             input_ids, attention_mask=attention_mask
         )
-        text_x = torch.tanh(self.text_hidden1(text_encoder_output[0, :, :]))
+        text_x = torch.tanh(
+            self.text_hidden1(text_encoder_output.last_hidden_state[0, :, :])
+        )
         return text_x
 
     def forward_graph(self, graph_batch):
