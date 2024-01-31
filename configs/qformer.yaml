@@ -13,7 +13,7 @@ default:
     batch_size: 16
     eval_batch_size: 16
     # warmup_factor: 0.05
-    lr_initial: 5e-4
+    lr_initial: 5e-5
     lr_min: 5e-6
     warmup_steps: 1
     # lr_decay_rate: 0.9

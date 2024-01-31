@@ -9,6 +9,7 @@ from src.models.gat import GATModel
 from src.models.gin import GINMol
 from src.models.basicproj import BasicProj
 from src.models.qformer import QFormer
+from src.models.crossatt import CrossAttentionModel
 import numpy as np
 from transformers import AutoTokenizer
 import torch
@@ -271,7 +272,10 @@ class BaseTrainer:
                         current_loss.backward()
                         self.optimizer.step()
 
-                self.scheduler.step(i + count_iter / len(self.train_loader))
+                if self.config["optim"].get("scheduler", "cosine") == "cosine":
+                    self.scheduler.step(i + count_iter / len(self.train_loader))
+                else:
+                    self.scheduler.step()
                 loss += current_loss.item()
 
                 count_iter += 1

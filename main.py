@@ -8,6 +8,7 @@ from src.models.gat import GATModel
 from src.models.basicproj import BasicProj
 from src.models.gin import GINMol
 from src.models.qformer import QFormer
+from src.models.crossatt import CrossAttentionModel
 
 MODELS_DICT = {
     "baseline": Baseline,
@@ -15,6 +16,7 @@ MODELS_DICT = {
     "basicproj": BasicProj,
     "gin": GINMol,
     "qformer": QFormer,
+    "crossatt": CrossAttentionModel,
 }
 
 if __name__ == "__main__":
