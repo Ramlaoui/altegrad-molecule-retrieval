@@ -509,7 +509,6 @@ class BaseTrainer:
                 ):
                     text_embeddings.append(output.tolist())
 
-        breakpoint()
         similarity = cosine_similarity(text_embeddings, graph_embeddings)
 
         solution = pd.DataFrame(similarity)

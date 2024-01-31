@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--precision",
         type=str,
-        default="float32",
+        default="float16",
         help="precision to use for training",
     )
 
