@@ -406,7 +406,9 @@ class BaseTrainer:
         checkpoint_path = self.config["checkpoint_dir"] + f"/{checkpoint_name}"
         self.save_path = checkpoint_path
         self.load_model()
-        self.model.load_state_dict(torch.load(checkpoint_path)["model_state_dict"])
+        self.model.load_state_dict(
+            torch.load(checkpoint_path, map_location=self.device)["model_state_dict"]
+        )
         self.model.eval()
 
     def get_mrr_val(self, load_checkpoint=True):
@@ -454,7 +456,9 @@ class BaseTrainer:
                 print("loading best model...")
 
             self.load_model()
-            self.model.load_state_dict(torch.load(self.save_path)["model_state_dict"])
+            self.model.load_state_dict(
+                torch.load(self.save_path, map_location=self.device)["model_state_dict"]
+            )
         self.model.eval()
 
         batch_size = self.config["optim"]["eval_batch_size"]
@@ -505,6 +509,7 @@ class BaseTrainer:
                 ):
                     text_embeddings.append(output.tolist())
 
+        breakpoint()
         similarity = cosine_similarity(text_embeddings, graph_embeddings)
 
         solution = pd.DataFrame(similarity)

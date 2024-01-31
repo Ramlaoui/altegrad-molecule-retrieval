@@ -127,6 +127,9 @@ class CrossAttentionModel(nn.Module):
         text_x = torch.tanh(
             self.text_hidden1(text_encoder_output.last_hidden_state[0, :, :])
         )
+        text_x = self.text_hidden2(text_x)
+        text_x = self.ln2(text_x)
+        text_x = text_x * torch.exp(self.temp)
         return text_x
 
     def forward_graph(self, graph_batch):
@@ -139,10 +142,11 @@ class CrossAttentionModel(nn.Module):
         x = x.relu()
         x = self.conv3(x, edge_index)
         x_graph = global_mean_pool(x, batch)
-        batch_size = x_graph.shape[0]
         x = self.mol_hidden1(x_graph)
         x = x.relu()
         x = self.mol_hidden2(x)
+        x = self.ln1(x)
+        x = x * torch.exp(self.temp)
         return x
 
     def get_graph_encoder(self):
