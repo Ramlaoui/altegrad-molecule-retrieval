@@ -65,3 +65,39 @@ class Monet(nn.Module):
         x = self.ln2(x)
 
         return x
+
+class BaseTextEncoder(nn.Module):
+    def __init__(self, model_name, nout, nhid):
+        super(BaseTextEncoder, self).__init__()
+        self.bert = AutoModel.from_pretrained(model_name)
+        self.linear1 = nn.Linear(768, nhid)
+        self.linear2 = nn.Linear(nhid, nout)
+        self.dropout = nn.Dropout(0.1)
+        self.ln1 = nn.LayerNorm((nout))
+
+    def forward(self, input_ids, attention_mask):
+        encoded_text = self.bert(input_ids, attention_mask=attention_mask)
+        # print(encoded_text.last_hidden_state.size())
+        x = encoded_text.last_hidden_state[:, 0, :]
+        x = self.linear1(x).relu()
+        x = self.dropout(x)
+        x = self.linear2(x)
+        x = self.ln1(x)
+        return x
+
+class Model(nn.Module):
+    def __init__(self, model_name, num_node_features, nout, nhid, nhead, nlayers, graph_hidden_channels, kernel_size):
+        super(Model, self).__init__()
+        self.graph_encoder = Monet(num_node_features, nout, nhid, nlayers, graph_hidden_channels, kernel_size)
+        self.text_encoder = BaseTextEncoder(model_name, nout, nhid)
+
+    def forward(self, graph_batch, input_ids, attention_mask):
+        graph_encoded = self.graph_encoder(graph_batch)
+        text_encoded = self.text_encoder(input_ids, attention_mask)
+        return graph_encoded, text_encoded
+
+    def get_text_encoder(self):
+        return self.text_encoder
+
+    def get_graph_encoder(self):
+        return self.graph_encoder
