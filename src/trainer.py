@@ -10,6 +10,7 @@ from src.models.gin import GINMol
 from src.models.basicproj import BasicProj
 from src.models.qformer import QFormer
 from src.models.crossatt import CrossAttentionModel
+from src.models.monet import Monet
 import numpy as np
 from transformers import AutoTokenizer
 import torch

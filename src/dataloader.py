@@ -5,6 +5,7 @@ from torch_geometric.data import Dataset
 from torch_geometric.data import Data
 from torch.utils.data import Dataset as TorchDataset
 import pandas as pd
+from torch_geometric.utils import degree
 
 
 class GraphTextDataset(Dataset):
@@ -65,7 +66,20 @@ class GraphTextDataset(Dataset):
                     x.append(self.gt[substruct_id])
                 else:
                     x.append(self.gt["UNK"])
-            return torch.LongTensor(edge_index).T, torch.FloatTensor(x)
+        x = torch.FloatTensor(x)
+        if edge_index:  # Check if edge_index is not empty
+            edge_index = torch.LongTensor(edge_index).T
+            row, col = edge_index
+            deg = degree(col, x.size(0), dtype=x.dtype)
+            edge_attr = torch.stack(
+                [1 / torch.sqrt(deg[row]), 1 / torch.sqrt(deg[col])], dim=-1
+            )
+        else:  # If edge_index is empty, create a self-loop for each node
+            edge_index = torch.stack(
+                [torch.arange(x.size(0)), torch.arange(x.size(0))], dim=0
+            )
+            edge_attr = torch.zeros((x.size(0), 2))
+        return edge_index, x, edge_attr
 
     def process(self):
         i = 0
@@ -79,10 +93,11 @@ class GraphTextDataset(Dataset):
                 padding="max_length",
                 add_special_tokens=True,
             )
-            edge_index, x = self.process_graph(raw_path)
+            edge_index, x, edge_attr = self.process_graph(raw_path)
             data = Data(
                 x=x,
                 edge_index=edge_index,
+                edge_attr=edge_attr,
                 input_ids=text_input["input_ids"],
                 attention_mask=text_input["attention_mask"],
             )
@@ -102,11 +117,6 @@ class GraphTextDataset(Dataset):
     def get_cid(self, cid):
         data = torch.load(osp.join(self.processed_dir, "data_{}.pt".format(cid)))
         return data
-
-    def to_graph_dataset(self):
-        return GraphDataset(
-            self.root, self.gt, self.split, transform=None, pre_transform=None
-        )
 
 
 class GraphDataset(Dataset):
@@ -157,20 +167,33 @@ class GraphDataset(Dataset):
                 else:
                     break
             next(f)
-            for line in f:
+            for line in f:  # get mol2vec features:
                 substruct_id = line.strip().split()[-1]
                 if substruct_id in self.gt.keys():
                     x.append(self.gt[substruct_id])
                 else:
                     x.append(self.gt["UNK"])
-            return torch.LongTensor(edge_index).T, torch.FloatTensor(x)
+        x = torch.FloatTensor(x)
+        if edge_index:  # Check if edge_index is not empty
+            edge_index = torch.LongTensor(edge_index).T
+            row, col = edge_index
+            deg = degree(col, x.size(0), dtype=x.dtype)
+            edge_attr = torch.stack(
+                [1 / torch.sqrt(deg[row]), 1 / torch.sqrt(deg[col])], dim=-1
+            )
+        else:  # If edge_index is empty, create a self-loop for each node
+            edge_index = torch.stack(
+                [torch.arange(x.size(0)), torch.arange(x.size(0))], dim=0
+            )
+            edge_attr = torch.zeros((x.size(0), 2))
+        return edge_index, x, edge_attr
 
     def process(self):
         i = 0
         for raw_path in self.raw_paths:
             cid = int(raw_path.split("/")[-1][:-6])
-            edge_index, x = self.process_graph(raw_path)
-            data = Data(x=x, edge_index=edge_index)
+            edge_index, x, edge_attr = self.process_graph(raw_path)
+            data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
             torch.save(data, osp.join(self.processed_dir, "data_{}.pt".format(cid)))
             i += 1
 

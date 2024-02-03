@@ -9,6 +9,7 @@ from src.models.basicproj import BasicProj
 from src.models.gin import GINMol
 from src.models.qformer import QFormer
 from src.models.crossatt import CrossAttentionModel
+from src.models.monet import Monet
 
 MODELS_DICT = {
     "baseline": Baseline,
@@ -17,6 +18,7 @@ MODELS_DICT = {
     "gin": GINMol,
     "qformer": QFormer,
     "crossatt": CrossAttentionModel,
+    "monet": Monet,
 }
 
 if __name__ == "__main__":
