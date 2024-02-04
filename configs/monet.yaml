@@ -2,11 +2,11 @@ default:
   model:
     model_name: distilbert-base-uncased
     num_node_features: 300
-    nout: 32
+    nout: 256
     nhid: 300
-    nlayers: 2
+    nlayers: 3
     graph_hidden_channels: 300
-    kernel_size: 3
+    kernel_size: 8
   optim:
     optimizer: AdamW
     scheduler: cosine

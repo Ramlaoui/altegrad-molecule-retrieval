@@ -22,6 +22,13 @@ default:
     max_epochs: 25
     # lr_gamma: 0.9
 
+defaultgat:
+  model:
+    model_name: distilbert-base-uncased
+    graph_encoder_type: gat
+  optim:
+    max_epochs: 50
+
 scibert:
   model:
     model_name: allenai/scibert_scivocab_uncased
