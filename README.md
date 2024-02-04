@@ -32,3 +32,21 @@ The `src` directory contains the main files to implement the core of the pipelin
 
 The `configs` directory contains the configuration files used to train the models. For every model a specific config file is used to define the hyperparameters and the data used in the training process.
 
+## Run a model
+
+To run a model, you can use the following command:
+
+```bash
+python -m main --config CONFIG_NAME-default
+```
+
+where `CONFIG_NAME` is the name of the configuration file and `NAME` is the name of the run. The run will be logged using wandb if `--is_debug` is not used.
+
+## Requirements
+
+The requirements are listed in the `requirements.txt` file. To install the requirements, you can use the following command:
+
+```bash
+pip install -r requirements.txt
+```
+
