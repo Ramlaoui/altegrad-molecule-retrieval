@@ -532,25 +532,3 @@ class BaseTrainer:
             torch.cuda.empty_cache()
 
         return similarity
-
-
-# model = Model(
-#     model_name=model_name,
-#     num_node_features=300,
-#     nout=768,
-#     nhid=300,
-#     graph_hidden_channels=300,
-# )  # nout = bert model hidden dim
-# model.to(device)
-
-# optimizer = optim.AdamW(
-#     model.parameters(), lr=learning_rate, betas=(0.9, 0.999), weight_decay=0.01
-# )
-
-# epoch = 0
-# loss = 0
-# losses = []
-# count_iter = 0
-# time1 = time.time()
-# printEvery = 50
-# best_validation_loss = 1000000
